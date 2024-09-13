@@ -3,7 +3,7 @@ import Editor from "./components/Editor";
 import Exam from "./components/Exam";
 import Header from "./components/Header";
 import List from "./components/List";
-import { useState, useReducer } from "react";
+import { useState, useReducer, useCallback } from "react";
 
 const mockData = [];
 
@@ -26,28 +26,33 @@ function App() {
   const [todos, dispatch] = useReducer(reducer, mockData);
   const [searchTodos, setSearchTodos] = useState([]);
 
-  const addTodo = (value) => {
-    const todo = {
-      id: todos.length + 1,
-      todo: value,
-      date: new Date().toLocaleDateString(),
-      isDone: false,
-    };
+  const addTodo = useCallback(
+    (value) => {
+      const todo = {
+        id: todos.length + 1,
+        todo: value,
+        date: new Date().toLocaleDateString(),
+        isDone: false,
+      };
 
-    dispatch({
-      type: "CREATE",
-      data: todo,
-    });
-  };
-  const deleteTodo = (id) => {
+      dispatch({
+        type: "CREATE",
+        data: todo,
+      });
+    },
+    [todos.length]
+  );
+
+  const checkTodo = useCallback((id) => {
+    dispatch({ type: "UPDATE", data: id });
+  }, []);
+
+  const deleteTodo = useCallback((id) => {
     dispatch({
       type: "DELETE",
       data: id,
     });
-  };
-  const checkTodo = (id) => {
-    dispatch({ type: "UPDATE", data: id });
-  };
+  }, []);
 
   return (
     <div className="app">
