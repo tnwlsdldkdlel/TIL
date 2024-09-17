@@ -1,4 +1,4 @@
-import { Route, Routes, Link, useNavigate } from "react-router-dom";
+import { Route, Routes } from "react-router-dom";
 import { useReducer, createContext } from "react";
 import "./App.css";
 import Home from "./pages/Home";
@@ -6,8 +6,6 @@ import New from "./pages/New";
 import Diary from "./pages/Diary";
 import Notfount from "./pages/Notfound";
 import Edit from "./pages/Edit";
-import Button from "./components/Button";
-import Header from "./components/Header";
 
 const mockData = [
   {
@@ -18,7 +16,7 @@ const mockData = [
   },
   {
     id: 2,
-    createdData: new Date().getTime(),
+    createdData: new Date().getTime() - 1000,
     emotionId: 2,
     content: "2번 일기 내용",
   },
@@ -42,8 +40,8 @@ function reducer({ state, action }) {
   }
 }
 
-const DiaryStateContext = createContext();
-const DiaryDispathchContext = createContext();
+export const DiaryStateContext = createContext();
+export const DiaryDispathchContext = createContext();
 
 function App() {
   const [data, dispatch] = useReducer(reducer, mockData);

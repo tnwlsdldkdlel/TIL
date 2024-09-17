@@ -1,16 +1,53 @@
 import Header from "../components/Header";
 import Button from "../components/Button";
 import DiaryList from "../components/DiaryList";
+import { useContext, useState } from "react";
+import { DiaryStateContext } from "../App";
+
+const getMonthlyData = (pivoDate, data) => {
+  const beginTime = new Date(
+    pivoDate.getFullYear(),
+    pivoDate.getMonth(),
+    1,
+    0,
+    0,
+    0
+  ).getTime();
+  const endTime = new Date(
+    pivoDate.getFullYear(),
+    pivoDate.getMonth() + 1,
+    0,
+    23,
+    59,
+    59
+  ).getTime();
+
+  return data.filter(
+    (item) => item.createdData >= beginTime && item.createdData <= endTime
+  );
+};
 
 const Home = () => {
+  const [pivoDate, setPivoDate] = useState(new Date());
+  const data = useContext(DiaryStateContext);
+  const monthlyDate = getMonthlyData(pivoDate, data);
+
+  const onClickMinus = () => {
+    setPivoDate(new Date(pivoDate.getFullYear(), pivoDate.getMonth() - 1));
+  };
+
+  const onClickPlus = () => {
+    setPivoDate(new Date(pivoDate.getFullYear(), pivoDate.getMonth() + 1));
+  };
+
   return (
     <div>
       <Header
-        title={"2024년 09월"}
-        leftChild={<Button text={"<"} />}
-        rightChild={<Button text={">"} />}
+        title={`${pivoDate.getFullYear()}년 ${pivoDate.getMonth() + 1}월`}
+        leftChild={<Button text={"<"} onClick={onClickMinus} />}
+        rightChild={<Button text={">"} onClick={onClickPlus} />}
       />
-      <DiaryList></DiaryList>
+      <DiaryList data={monthlyDate} />
     </div>
   );
 };
