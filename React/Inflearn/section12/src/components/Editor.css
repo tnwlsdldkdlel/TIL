@@ -5,12 +5,17 @@
   margin: 20px 0px;
 }
 
+.Edit > section {
+  margin-bottom: 40px;
+}
+
 .Edit > section > h4 {
   font-size: 22px;
   font-weight: bold;
 }
 
-.Edit > section > input {
+.Edit > section > input,
+textarea {
   border: unset;
   border-radius: 5px;
   background-color: rgb(236, 236, 236);
@@ -23,4 +28,17 @@
   display: flex;
   justify-content: space-around;
   gap: 2%;
+}
+
+.Edit > section > textarea {
+  padding: 20px;
+  width: 100%;
+  min-height: 200px;
+  resize: vertical;
+  box-sizing: border-box;
+}
+
+.Edit .button_sction {
+  display: flex;
+  justify-content: space-between;
 }

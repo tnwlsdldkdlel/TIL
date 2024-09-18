@@ -22,7 +22,7 @@ const mockData = [
   },
 ];
 
-function reducer({ state, action }) {
+function reducer(state, action) {
   switch (action.type) {
     case "CREATE":
       return [action.data, ...state];
@@ -51,7 +51,7 @@ function App() {
     dispatch({
       type: "CREATE",
       data: {
-        id: state.length(),
+        id: data.length + 1,
         createdData: createdData,
         emotionId: emotionId,
         content: content,
