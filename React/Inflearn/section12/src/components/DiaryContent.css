@@ -1,0 +1,18 @@
+.DiaryContent {
+  text-align: center;
+}
+
+.DiaryContent .emotion > .emotion_item {
+  margin: 0 auto;
+  width: 250px;
+  height: 250px;
+}
+
+.DiaryContent .content > div {
+  text-align: left;
+  font-weight: bolder;
+  border: unset;
+  border-radius: 5px;
+  background-color: rgb(236, 236, 236);
+  padding: 20px 20px;
+}

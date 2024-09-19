@@ -1,5 +1,5 @@
 import { Route, Routes } from "react-router-dom";
-import { useReducer, createContext } from "react";
+import { useReducer, createContext, useEffect } from "react";
 import "./App.css";
 import Home from "./pages/Home";
 import New from "./pages/New";
@@ -7,44 +7,63 @@ import Diary from "./pages/Diary";
 import Notfount from "./pages/Notfound";
 import Edit from "./pages/Edit";
 
-const mockData = [
-  {
-    id: 1,
-    createdData: new Date().getTime(),
-    emotionId: 1,
-    content: "1번 일기 내용",
-  },
-  {
-    id: 2,
-    createdData: new Date().getTime() - 1000,
-    emotionId: 2,
-    content: "2번 일기 내용",
-  },
-];
-
 function reducer(state, action) {
+  let nextState;
+
   switch (action.type) {
+    case "INIT":
+      return action.data;
     case "CREATE":
-      return [action.data, ...state];
+      nextState = [action.data, ...state];
+      break;
 
     case "UPDATE":
-      return state.map((data) =>
+      nextState = state.map((data) =>
         String(data.id) === String(action.data.id) ? action.data : data
       );
+      break;
 
     case "DELETE":
-      return state.filter((data) => String(data.id) !== String(action.data.id));
+      nextState = state.filter(
+        (data) => String(data.id) !== String(action.data.id)
+      );
+      break;
 
     default:
       return state;
   }
+
+  localStorage.setItem("diary", JSON.stringify(nextState));
+  return nextState;
 }
 
 export const DiaryStateContext = createContext();
 export const DiaryDispathchContext = createContext();
 
 function App() {
-  const [data, dispatch] = useReducer(reducer, mockData);
+  const [data, dispatch] = useReducer(reducer, []);
+
+  useEffect(() => {
+    const sotredData = localStorage.getItem("diary");
+
+    if (!sotredData) {
+      return;
+    }
+
+    const parsedData = JSON.parse(sotredData);
+    if (!Array.isArray(parsedData)) {
+      return;
+    }
+
+    let maxId = 0;
+    parsedData.forEach((item) => {
+      if (Number(item.id) > maxId) {
+        maxId = Number(item.id);
+      }
+    });
+
+    dispatch({ type: "INIT", data: parsedData });
+  }, []);
 
   // 새로운 일기 추가
   const onCreate = (createdData, emotionId, content) => {

@@ -7,7 +7,7 @@ const DiaryItem = ({ content, id, createdData, emotionId }) => {
   const nav = useNavigate();
 
   return (
-    <div className="DiaryItem">
+    <div className="DiaryItem" onClick={() => nav(`/diary/${id}`)}>
       <div
         onClick={() => nav(`/diary/${id}`)}
         className={`img_section img_section_${emotionId}`}
