@@ -1,13 +1,12 @@
-import { auth } from "../firebase";
+import PostTweetForm from "../components/post-tweet-form";
+import Timeline from "../components/timeline";
 
 export default function Home() {
-  const logOut = () => {
-    auth.signOut();
-  };
-
   return (
-    <h1>
-      <button onClick={logOut}>Log Out</button>
-    </h1>
+    <>
+      <PostTweetForm></PostTweetForm>
+      <div></div>
+      <Timeline></Timeline>
+    </>
   );
 }

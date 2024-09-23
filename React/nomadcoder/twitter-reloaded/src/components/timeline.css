@@ -1,0 +1,6 @@
+.time-line {
+  display: grid;
+  gap: 50px;
+  overflow-y: scroll;
+  grid-template-columns: 1fr 5fr;
+}
