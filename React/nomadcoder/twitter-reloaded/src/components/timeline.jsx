@@ -2,7 +2,7 @@ import { useEffect, useState } from "react";
 import "./timeline.css";
 import {
   collection,
-  getDocs,
+  limit,
   onSnapshot,
   orderBy,
   query,
@@ -13,23 +13,48 @@ import Tweet from "./tweet";
 export default function Timeline() {
   const [tweets, setTweet] = useState([]);
 
-  const fetchTweents = async () => {
-    const tweetsQuery = query(
-      collection(db, "tweets"),
-      orderBy("createdAt", "desc")
-    );
-    // const spanshot = await getDocs(tweetsQuery);
-    await onSnapshot(tweetsQuery, (snapshot) => {
-      snapshot.docs.map((doc) => setTweet((prev) => [...prev, doc.data()]));
-    });
-  };
-
   useEffect(() => {
+    let unsubcribe = null;
+
+    const fetchTweents = async () => {
+      const tweetsQuery = query(
+        collection(db, "tweets"),
+        orderBy("createdAt", "desc"),
+        limit(25)
+      );
+      // const spanshot = await getDocs(tweetsQuery);
+      unsubcribe = await onSnapshot(tweetsQuery, (snapshot) => {
+        const tweets = snapshot.docs.map((doc) => {
+          const {
+            tweet,
+            createdAt,
+            userId,
+            username,
+            photo,
+            id = doc.id,
+          } = doc.data();
+          return {
+            tweet,
+            createdAt,
+            userId,
+            username,
+            photo,
+            id,
+          };
+        });
+        setTweet(tweets);
+      });
+    };
+
     fetchTweents();
+
+    return () => {
+      unsubcribe && unsubcribe();
+    };
   }, []);
 
   return (
-    <div>
+    <div className="time-line scrollable">
       {tweets.map((item) => (
         <Tweet key={item.id} {...item}></Tweet>
       ))}

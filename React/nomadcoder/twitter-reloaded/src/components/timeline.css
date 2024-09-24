@@ -1,6 +1,6 @@
 .time-line {
-  display: grid;
-  gap: 50px;
+  display: flex;
+  gap: 10px;
+  flex-direction: column;
   overflow-y: scroll;
-  grid-template-columns: 1fr 5fr;
 }

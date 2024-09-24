@@ -13,3 +13,31 @@ body {
   display: flex;
   justify-content: center;
 }
+
+:root {
+  --scrollbar-width: 10px;
+  --scrollbar-thumb-color: #1d9bf0;
+  --scrollbar-track-color: none;
+}
+
+.scrollable {
+  overflow-y: scroll;
+  scrollbar-width: var(--scrollbar-width);
+}
+
+.scrollable::-webkit-scrollbar {
+  width: var(--scrollbar-width);
+}
+
+.scrollable::-webkit-scrollbar-track {
+  background: var(--scrollbar-track-color);
+}
+
+.scrollable::-webkit-scrollbar-thumb {
+  background: var(--scrollbar-thumb-color);
+  border-radius: 10px;
+}
+
+.scrollable::-webkit-scrollbar-thumb:hover {
+  background: rgba(220, 20, 60, 0.8);
+}
