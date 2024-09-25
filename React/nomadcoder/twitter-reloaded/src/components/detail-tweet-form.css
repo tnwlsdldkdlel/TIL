@@ -1,0 +1,30 @@
+.detail-tweet-form {
+  padding: 20px;
+}
+
+.detail-tweet-form .info {
+  display: flex;
+  gap: 10px;
+  font-size: small;
+}
+
+.detail-tweet-form .img {
+  width: 100%;
+  margin-bottom: 20px;
+}
+
+.detail-tweet-form .content {
+  border: 2px solid white;
+  padding: 20px;
+  border-radius: 20px;
+  font-size: 16px;
+  color: white;
+  background-color: black;
+  width: 100%;
+  resize: none;
+  font-family: system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto,
+    Oxygen, Ubuntu, Cantarell, "Open Sans", "Helvetica Neue", sans-serif;
+  &::placeholder {
+    font-size: 16px;
+  }
+}

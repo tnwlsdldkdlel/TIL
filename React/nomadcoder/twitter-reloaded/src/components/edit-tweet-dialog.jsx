@@ -29,7 +29,7 @@ export default function EditTweetDialog({ isOpen, handleClose, ...data }) {
           </div>
         </DialogTitle>
         <DialogContent className="scrollable">
-          <EditTweetForm {...data}></EditTweetForm>
+          <EditTweetForm {...data} handleClose={handleClose}></EditTweetForm>
         </DialogContent>
       </Dialog>
     </Fragment>

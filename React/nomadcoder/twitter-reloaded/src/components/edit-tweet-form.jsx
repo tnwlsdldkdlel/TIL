@@ -1,29 +1,26 @@
-import { useEffect, useState } from "react";
+import { useState } from "react";
 import "./post-tweet-form.css";
 import { auth, db, storage } from "../firebase";
-import { addDoc, collection, updateDoc } from "firebase/firestore";
-import { getDownloadURL, ref, uploadBytes } from "firebase/storage";
+import { doc, updateDoc } from "firebase/firestore";
+import {
+  deleteObject,
+  getDownloadURL,
+  ref,
+  uploadBytes,
+} from "firebase/storage";
 
-export default function EditTweetForm({ ...data }) {
+export default function EditTweetForm({ handleClose, ...data }) {
   const [isLoading, setLoading] = useState(false);
-  const [input, setInput] = useState({});
-
-  useEffect(() => {
-    setInput(data);
-  }, []);
+  const [input, setInput] = useState(data);
+  const [isUpdateImg, setIsUpdateImg] = useState(false);
 
   const onChange = (e) => {
     const name = e.target.name;
     let value = e.target.value;
 
-    console.log(input);
-
-    console.log("test");
-    console.log(name);
-    console.log(value);
-
-    if (name === "file") {
+    if (name === "photo") {
       value = e.target.files[0];
+      setIsUpdateImg(true);
     }
 
     setInput({ ...input, [name]: value });
@@ -42,24 +39,29 @@ export default function EditTweetForm({ ...data }) {
 
     try {
       setLoading(true);
-      const doc = await addDoc(collection(db, "tweets"), {
-        tweet: input.tweet,
-        createdAt: Date.now(),
-        username: user.displayName || "Anonymous",
-        userId: user.uid,
-      });
+      const docRef = doc(db, "tweets", data.id);
+      const photoRef = ref(storage, `tweets/${user.uid}/${data.id}`);
 
-      if (input.file) {
-        const locationRef = ref(
-          storage,
-          `tweets/${user.uid}-${user.displayName}/${doc.id}`
-        );
-        const result = await uploadBytes(locationRef, input.file);
+      if (input.photo) {
+        if (data.photo) {
+          await deleteObject(photoRef);
+        }
+
+        const result = await uploadBytes(photoRef, input.photo);
         const url = await getDownloadURL(result.ref);
-        updateDoc(doc, { photo: url });
+        await updateDoc(docRef, {
+          tweet: input.tweet,
+          photo: url,
+          updatedAt: Date.now(),
+        });
+      } else {
+        await updateDoc(docRef, {
+          tweet: input.tweet,
+          updatedAt: Date.now(),
+        });
       }
 
-      setInput({});
+      handleClose();
     } catch (error) {
       console.log(error);
     } finally {
@@ -69,7 +71,13 @@ export default function EditTweetForm({ ...data }) {
 
   return (
     <form className="post-tweet-form" onSubmit={onSubmit}>
-      <img src={data.photo} />
+      <img
+        src={
+          input.photo === undefined || typeof input.photo === "string"
+            ? input.photo
+            : window.URL.createObjectURL(input.photo)
+        }
+      />
       <textarea
         rows={5}
         maxLength={180}
@@ -79,13 +87,13 @@ export default function EditTweetForm({ ...data }) {
         value={input.tweet}
         onChange={onChange}
       ></textarea>
-      <label className="file-btn" htmlFor="file">
-        {input.photo ? "Update photo added ✅" : "Update photo"}
+      <label className="file-btn" htmlFor="photo">
+        {isUpdateImg ? "Update photo added ✅" : "Update photo"}
       </label>
       <input
         className="file-input"
         type="file"
-        id="file"
+        id="photo"
         accept="image/*"
         name="photo"
         onChange={onChange}

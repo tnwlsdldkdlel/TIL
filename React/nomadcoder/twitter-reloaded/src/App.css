@@ -23,6 +23,7 @@ body {
 .scrollable {
   overflow-y: scroll;
   scrollbar-width: var(--scrollbar-width);
+  cursor: pointer;
 }
 
 .scrollable::-webkit-scrollbar {
@@ -39,5 +40,5 @@ body {
 }
 
 .scrollable::-webkit-scrollbar-thumb:hover {
-  background: rgba(220, 20, 60, 0.8);
+  opacity: 0.5;
 }

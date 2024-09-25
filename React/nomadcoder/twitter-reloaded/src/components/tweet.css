@@ -7,11 +7,22 @@
   cursor: pointer;
 }
 
+.tweet .right {
+  display: flex;
+  justify-content: space-between;
+}
+
 .tweet .name {
   font-weight: 600;
   font-size: 15px;
   display: flex;
+  width: 100%;
   gap: 10px;
+}
+
+.tweet .right .menu .btn {
+  width: 20px;
+  color: white;
 }
 
 .tweet .payload {
@@ -19,7 +30,7 @@
   font-size: 18px;
 }
 
-.tweet .photo {
+.tweet .right .photo {
   width: 100px;
   height: 100px;
   border-radius: 15px;
@@ -57,5 +68,18 @@
 
 .detail-dialog-title {
   display: flex;
-  justify-content: right !important;
+  justify-content: space-between;
+}
+
+.detail-dialog-title .info {
+  display: flex;
+  gap: 10px;
+  font-size: small;
+}
+
+.tweet .like-btn {
+  width: 35px;
+  cursor: pointer;
+  display: flex;
+  gap: 5px;
 }

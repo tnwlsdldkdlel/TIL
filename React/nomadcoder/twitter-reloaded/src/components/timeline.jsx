@@ -9,6 +9,7 @@ import {
 } from "firebase/firestore";
 import { db } from "../firebase";
 import Tweet from "./tweet";
+import { JoinFull, JoinLeft } from "@mui/icons-material";
 
 export default function Timeline() {
   const [tweets, setTweet] = useState([]);
@@ -19,27 +20,32 @@ export default function Timeline() {
     const fetchTweents = async () => {
       const tweetsQuery = query(
         collection(db, "tweets"),
+        JoinLeft(db, "likes"),
         orderBy("createdAt", "desc"),
         limit(25)
       );
-      // const spanshot = await getDocs(tweetsQuery);
+
       unsubcribe = await onSnapshot(tweetsQuery, (snapshot) => {
         const tweets = snapshot.docs.map((doc) => {
           const {
             tweet,
             createdAt,
+            updatedAt,
             userId,
             username,
             photo,
             id = doc.id,
+            like,
           } = doc.data();
           return {
             tweet,
             createdAt,
+            updatedAt,
             userId,
             username,
             photo,
             id,
+            like,
           };
         });
         setTweet(tweets);
