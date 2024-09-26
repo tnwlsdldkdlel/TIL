@@ -1,7 +1,7 @@
 import { GithubAuthProvider, signInWithPopup } from "firebase/auth";
 import "./github-btn.css";
-import { auth } from "../firebase";
 import { useNavigate } from "react-router-dom";
+import { auth } from "../../firebase";
 
 export default function GithubButton() {
   const navigate = useNavigate();

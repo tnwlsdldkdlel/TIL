@@ -1,6 +1,6 @@
 import { useState } from "react";
 import "./post-tweet-form.css";
-import { auth, db, storage } from "../firebase";
+import { auth, db, storage } from "../../../firebase";
 import { addDoc, collection, updateDoc } from "firebase/firestore";
 import { getDownloadURL, ref, uploadBytes } from "firebase/storage";
 
@@ -38,7 +38,6 @@ export default function PostTweetForm() {
         updatedAt: Date.now(),
         username: user.displayName || "Anonymous",
         userId: user.uid,
-        like: 0,
       });
 
       if (input.file) {

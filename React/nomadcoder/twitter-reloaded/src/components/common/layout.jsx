@@ -1,6 +1,6 @@
 import { Link, Outlet, useNavigate } from "react-router-dom";
 import "./layout.css";
-import { auth } from "../firebase";
+import { auth } from "../../firebase";
 
 export default function Layout() {
   const navigate = useNavigate();

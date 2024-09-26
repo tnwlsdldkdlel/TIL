@@ -1,18 +1,16 @@
 import Dialog from "@mui/material/Dialog";
+import DialogContent from "@mui/material/DialogContent";
 import DialogTitle from "@mui/material/DialogTitle";
-import "./tweet.css";
-import DetailTweetForm from "./detail-tweet-form";
-import { timeAgo } from "../common/time-ago";
+import "../tweet.css";
+import EditTweetForm from "./edit-tweet-form";
+import { Fragment } from "react";
 
-export default function DetailTweetDialog({ isOpen, handleClose, ...data }) {
+export default function EditTweetDialog({ isOpen, handleClose, ...data }) {
   return (
-    <>
-      <Dialog className="detail-dialog" open={isOpen} onClose={handleClose}>
-        <DialogTitle className="detail-dialog-title">
-          <div className="info">
-            <div>{data.username}</div>
-            <div>{timeAgo(data.updatedAt)}</div>
-          </div>
+    <Fragment>
+      <Dialog className="edit-dialog" open={isOpen} onClose={handleClose}>
+        <DialogTitle className="dialog-title">
+          Edit
           <div className="close-btn" onClick={handleClose}>
             <svg
               xmlns="http://www.w3.org/2000/svg"
@@ -30,8 +28,10 @@ export default function DetailTweetDialog({ isOpen, handleClose, ...data }) {
             </svg>
           </div>
         </DialogTitle>
-        <DetailTweetForm {...data} />
+        <DialogContent className="scrollable">
+          <EditTweetForm {...data} handleClose={handleClose}></EditTweetForm>
+        </DialogContent>
       </Dialog>
-    </>
+    </Fragment>
   );
 }

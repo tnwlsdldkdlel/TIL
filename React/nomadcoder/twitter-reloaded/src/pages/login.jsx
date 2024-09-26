@@ -1,12 +1,10 @@
-/* eslint-disable react/no-unescaped-entities */
-/* eslint-disable no-unused-vars */
 import { useState } from "react";
 import "./create-account.css";
 import { signInWithEmailAndPassword } from "firebase/auth";
-import { auth } from "../firebase";
 import { Link, useNavigate } from "react-router-dom";
 import { FirebaseError } from "firebase/app";
-import GithubButton from "../components/github-btn";
+import GithubButton from "../components/auth/github-btn";
+import { auth } from "../firebase";
 
 export default function Login() {
   const navigate = useNavigate();

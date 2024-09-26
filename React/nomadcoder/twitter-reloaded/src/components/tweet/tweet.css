@@ -1,15 +1,20 @@
 .tweet {
-  display: grid;
-  grid-template-columns: 3fr 1fr;
   padding: 20px;
-  border: 1px solid rgba(255, 255, 255, 0.5);
-  border-radius: 15px;
-  cursor: pointer;
+  border-bottom: 1px solid rgba(255, 255, 255, 0.5);
 }
 
-.tweet .right {
+.tweet .top {
   display: flex;
   justify-content: space-between;
+}
+
+.tweet .top .left {
+  display: flex;
+  gap: 10px;
+}
+
+.tweet .top .left .time {
+  color: #808080;
 }
 
 .tweet .name {
@@ -23,6 +28,7 @@
 .tweet .right .menu .btn {
   width: 20px;
   color: white;
+  padding: unset;
 }
 
 .tweet .payload {
@@ -30,10 +36,10 @@
   font-size: 18px;
 }
 
-.tweet .right .photo {
-  width: 100px;
-  height: 100px;
-  border-radius: 15px;
+.tweet .middle .photo {
+  display: flex;
+  width: 100%;
+  justify-content: center;
 }
 
 .edit-btn,
@@ -41,10 +47,6 @@
 .delete-btn {
   width: 20px;
   cursor: pointer;
-}
-
-.delete-btn {
-  color: tomato;
 }
 
 .btn {
@@ -66,20 +68,29 @@
   justify-content: space-between;
 }
 
-.detail-dialog-title {
+.tweet .bottom {
+  display: flex;
+  gap: 10px;
+  width: 100%;
+}
+
+.tweet .bottom .like-btn,
+.tweet .bottom .reply-btn {
+  width: 30px;
+  cursor: pointer;
+  display: flex;
+  gap: 5px;
+}
+
+.tweet .bottom .like-btn .active {
+  color: red;
+}
+
+.reply-dialog-title {
   display: flex;
   justify-content: space-between;
 }
 
-.detail-dialog-title .info {
-  display: flex;
-  gap: 10px;
-  font-size: small;
-}
-
-.tweet .like-btn {
-  width: 35px;
-  cursor: pointer;
-  display: flex;
-  gap: 5px;
+.reply-dialog-title .info {
+  font-size: large;
 }

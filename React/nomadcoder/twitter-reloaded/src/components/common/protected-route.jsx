@@ -1,6 +1,5 @@
-/* eslint-disable react/prop-types */
 import { Navigate } from "react-router-dom";
-import { auth } from "../firebase";
+import { auth } from "../../firebase";
 
 export default function ProtectedRoute({ children }) {
   const user = auth.currentUser;

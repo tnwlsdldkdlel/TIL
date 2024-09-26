@@ -1,14 +1,14 @@
 import { createBrowserRouter, RouterProvider } from "react-router-dom";
-import Layout from "./components/layout";
+import Layout from "./components/common/layout";
 import { useEffect, useState } from "react";
-import LoadingScreen from "./components/loading-screen";
+import LoadingScreen from "./components/common/loading-screen";
 import { auth } from "./firebase";
 import Home from "./pages/home";
 import Profile from "./pages/profile";
 import Login from "./pages/login";
 import CreateAccount from "./pages/create-account";
 import "./App.css";
-import ProtectedRoute from "./components/protected-route";
+import ProtectedRoute from "./components/common/protected-route";
 
 const router = createBrowserRouter([
   {
