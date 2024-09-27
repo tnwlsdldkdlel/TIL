@@ -1,11 +1,10 @@
 .layout {
   display: grid;
-  gap: 50px;
+  gap: 10px;
   grid-template-columns: 1fr 4fr;
   padding: 50px 0px;
   width: 100%;
   max-width: 860px;
-  height: 100%;
 }
 
 .layout .menu {

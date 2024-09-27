@@ -1,4 +1,12 @@
-import { addDoc, collection, deleteDoc, doc } from "firebase/firestore";
+import {
+  addDoc,
+  collection,
+  deleteDoc,
+  doc,
+  getDocs,
+  query,
+  where,
+} from "firebase/firestore";
 import { auth, db, storage } from "../../firebase";
 import "./tweet.css";
 import { useState } from "react";
@@ -9,9 +17,10 @@ import { deleteObject, ref } from "firebase/storage";
 import { timeAgo } from "../../common/time-ago";
 import TweetReplyDialog from "./reply/tweet-reply-dialog";
 
-export default function Tweet({ ...data }) {
+export default function Tweet({ isReply, isLast, ...data }) {
   const [isOpen, setIsOpen] = useState("");
   const [isOpenReply, setIsOpenReply] = useState(false);
+  const [isOpenReTweet, setIsOpenReTweet] = useState(false);
   const [anchorEl, setAnchorEl] = useState(null);
   const isMenuOpen = Boolean(anchorEl);
   const user = auth.currentUser;
@@ -25,12 +34,35 @@ export default function Tweet({ ...data }) {
     }
 
     try {
+      const replyQuery = query(
+        collection(db, `replies`),
+        where("tweetId", "==", data.id)
+      );
+
+      const likeQuery = query(
+        collection(db, `likes`),
+        where("tweetId", "==", data.id)
+      );
+      // tweets
       await deleteDoc(doc(db, "tweets", data.id));
 
+      // photo
       if (data.photo) {
         const photoRef = ref(storage, `tweets/${user.uid}/${data.id}`);
         await deleteObject(photoRef);
       }
+
+      // reply
+      const replySnapshot = await getDocs(replyQuery);
+      replySnapshot.forEach(async (item) => {
+        await deleteDoc(doc(db, "replies", item.id));
+      });
+
+      // like
+      const likeSnapshot = await getDocs(likeQuery);
+      likeSnapshot.forEach(async (item) => {
+        await deleteDoc(doc(db, "likes", item.id));
+      });
     } catch (error) {
       console.log(error);
     }
@@ -38,7 +70,8 @@ export default function Tweet({ ...data }) {
 
   const handleClose = () => {
     setIsOpen("");
-    onClickCloseMenu();
+    setIsOpenReply(false);
+    setIsOpenReTweet(false);
   };
 
   const onClickMenu = (e) => {
@@ -46,7 +79,10 @@ export default function Tweet({ ...data }) {
     setAnchorEl(e.currentTarget);
   };
 
-  const onClickCloseMenu = () => {
+  const onClickCloseMenu = (e) => {
+    if (e) {
+      e.stopPropagation();
+    }
     setAnchorEl(null);
   };
 
@@ -72,13 +108,24 @@ export default function Tweet({ ...data }) {
     setIsOpenReply(true);
   };
 
+  const onClickReTweetDialog = () => {
+    setIsOpenReTweet(true);
+  };
+
   return (
     <>
-      <div className="tweet">
+      <div
+        className="tweet"
+        style={{
+          border: isLast ? "none" : "",
+          cursor: isReply ? "" : "pointer",
+        }}
+        onClick={isReply ? "" : onClickRelpyDialog}
+      >
         <div className="top">
           <div className="left">
             <div>{data.username}</div>
-            <div className="time">{timeAgo(data.updatedAt)}</div>
+            <div className="time">{timeAgo(data.createdAt)}</div>
           </div>
           <div className="right">
             {data.username === user.displayName ? (
@@ -94,6 +141,7 @@ export default function Tweet({ ...data }) {
                   <MoreVertIcon />
                 </IconButton>
                 <Menu
+                  elevation={0}
                   id="basic-menu"
                   MenuListProps={{
                     "aria-labelledby": "basic-button",
@@ -124,6 +172,7 @@ export default function Tweet({ ...data }) {
                   <MenuItem
                     key={"edit"}
                     onClick={() => onClickMenuItem("edit")}
+                    disableRipple
                   >
                     Edit
                   </MenuItem>
@@ -133,6 +182,7 @@ export default function Tweet({ ...data }) {
                     sx={{
                       borderBottom: "0px !important",
                     }}
+                    disableRipple
                   >
                     Remove
                   </MenuItem>
@@ -182,7 +232,7 @@ export default function Tweet({ ...data }) {
             </div>
           )}
           {data.like.count}
-          <div className="reply-btn" onClick={onClickRelpyDialog}>
+          <div className="reply-btn">
             <svg
               xmlns="http://www.w3.org/2000/svg"
               fill="none"
@@ -198,7 +248,23 @@ export default function Tweet({ ...data }) {
               />
             </svg>
           </div>
-          123
+          {data.reply.count}
+          <div className="re-tweet-btn" onClick={onClickReTweetDialog}>
+            <svg
+              xmlns="http://www.w3.org/2000/svg"
+              fill="none"
+              viewBox="0 0 24 24"
+              strokeWidth={1.5}
+              stroke="currentColor"
+              className="size-6"
+            >
+              <path
+                strokeLinecap="round"
+                strokeLinejoin="round"
+                d="M19.5 12c0-1.232-.046-2.453-.138-3.662a4.006 4.006 0 0 0-3.7-3.7 48.678 48.678 0 0 0-7.324 0 4.006 4.006 0 0 0-3.7 3.7c-.017.22-.032.441-.046.662M19.5 12l3-3m-3 3-3-3m-12 3c0 1.232.046 2.453.138 3.662a4.006 4.006 0 0 0 3.7 3.7 48.656 48.656 0 0 0 7.324 0 4.006 4.006 0 0 0 3.7-3.7c.017-.22.032-.441.046-.662M4.5 12l3 3m-3-3-3 3"
+              />
+            </svg>
+          </div>
         </div>
       </div>
       <EditTweetDialog
@@ -206,7 +272,11 @@ export default function Tweet({ ...data }) {
         handleClose={handleClose}
         {...data}
       />
-      <TweetReplyDialog isOpenReply={isOpenReply} handleClose={handleClose} />
+      <TweetReplyDialog
+        isOpenReply={isOpenReply}
+        handleClose={handleClose}
+        {...data}
+      />
     </>
   );
 }

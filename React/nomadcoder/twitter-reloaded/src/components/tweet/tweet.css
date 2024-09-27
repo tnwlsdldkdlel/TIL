@@ -1,6 +1,6 @@
 .tweet {
   padding: 20px;
-  border-bottom: 1px solid rgba(255, 255, 255, 0.5);
+  border-bottom: 1px solid white;
 }
 
 .tweet .top {
@@ -61,6 +61,7 @@
   border-radius: 20px !important;
   resize: none;
   width: -webkit-fill-available;
+  height: -webkit-fill-available;
 }
 
 .dialog-title {
@@ -70,16 +71,17 @@
 
 .tweet .bottom {
   display: flex;
-  gap: 10px;
+  gap: 15px;
   width: 100%;
 }
 
 .tweet .bottom .like-btn,
-.tweet .bottom .reply-btn {
-  width: 30px;
+.tweet .bottom .reply-btn,
+.tweet .bottom .re-tweet-btn {
+  width: 22px;
   cursor: pointer;
   display: flex;
-  gap: 5px;
+  gap: 10px;
 }
 
 .tweet .bottom .like-btn .active {
@@ -93,4 +95,30 @@
 
 .reply-dialog-title .info {
   font-size: large;
+}
+
+.reply-dialog-content {
+  padding: 0px 20px;
+  display: "flex";
+  flex-direction: "column";
+  position: "relative";
+}
+
+.reply-dialog-content .title {
+  border-bottom: 1px solid white;
+  margin-bottom: 20px;
+}
+
+.reply-dialog-content .title > p {
+  margin: 20px;
+  font-size: large;
+  font-weight: bold;
+}
+
+.reply-dialog-content .reply-form {
+  position: sticky;
+  bottom: 0;
+  left: 0;
+  right: 0;
+  background-color: black;
 }

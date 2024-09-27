@@ -23,7 +23,6 @@ body {
 .scrollable {
   overflow-y: scroll;
   scrollbar-width: var(--scrollbar-width);
-  cursor: pointer;
 }
 
 .scrollable::-webkit-scrollbar {

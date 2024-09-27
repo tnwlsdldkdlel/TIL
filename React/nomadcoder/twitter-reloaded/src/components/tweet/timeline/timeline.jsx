@@ -58,10 +58,33 @@ export default function Timeline() {
           });
         });
 
+        const relplyQuery = query(
+          collection(db, `replies`),
+          where("tweetId", "==", tweetId)
+        );
+
+        onSnapshot(relplyQuery, (replySnapshot) => {
+          const replyCount = replySnapshot.docs.length;
+
+          // 부모 상태 업데이트
+          setTweet((prevTweets) => {
+            return prevTweets.map((tweet) => {
+              if (tweet.id === tweetId) {
+                return {
+                  ...tweet,
+                  reply: { count: replyCount },
+                };
+              }
+              return tweet;
+            });
+          });
+        });
+
         return {
           ...tweetData,
           id: tweetId,
-          like: { isLiked: false, count: 0 }, // 초기값 설정
+          like: { isLiked: false, count: 0 },
+          reply: { count: 0 },
         };
       });
 
@@ -76,8 +99,12 @@ export default function Timeline() {
 
   return (
     <div className="time-line scrollable">
-      {tweets.map((item) => (
-        <Tweet key={item.id} {...item}></Tweet>
+      {tweets.map((item, index) => (
+        <Tweet
+          key={item.id}
+          isLast={index === tweets.length - 1} // 마지막 인덱스인지 확인
+          {...item}
+        />
       ))}
     </div>
   );
