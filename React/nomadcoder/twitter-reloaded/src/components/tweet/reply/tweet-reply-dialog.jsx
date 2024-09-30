@@ -15,61 +15,63 @@ export default function TweetReplyDialog({
   const user = auth.currentUser;
 
   useEffect(() => {
-    const repliesQuery = query(
-      collection(db, "replies"),
-      where("tweetId", "==", data.id)
-    );
+    if (data.id) {
+      const repliesQuery = query(
+        collection(db, "replies"),
+        where("tweetId", "==", data.id)
+      );
 
-    const unsubscribeReplies = onSnapshot(repliesQuery, (snapshot) => {
-      const repliesData = snapshot.docs.map((doc) => {
-        const replyData = doc.data();
-        const replyId = doc.id;
+      const unsubscribeReplies = onSnapshot(repliesQuery, (snapshot) => {
+        const repliesData = snapshot.docs.map((doc) => {
+          const replyData = doc.data();
+          const replyId = doc.id;
 
-        // 자식 컬렉션(예: likes) 스냅샷
-        const likesQuery = query(
-          collection(db, `likes`),
-          where("replyId", "==", replyId)
-        );
+          // 자식 컬렉션(예: likes) 스냅샷
+          const likesQuery = query(
+            collection(db, `likes`),
+            where("replyId", "==", replyId)
+          );
 
-        onSnapshot(likesQuery, (likeSnapshot) => {
-          const likeCount = likeSnapshot.docs.length;
-          let likeId = 0;
-          const isLiked = likeSnapshot.docs.some((likeDoc) => {
-            if (likeDoc.data().userId === user.uid) {
-              likeId = likeDoc.id;
-              return true;
-            }
-            return false;
-          });
-
-          // 부모 상태 업데이트
-          setReplies((prevReplies) => {
-            return prevReplies.map((reply) => {
-              if (reply.id === replyId) {
-                return {
-                  ...reply,
-                  like: { isLiked, count: likeCount, id: likeId },
-                };
+          onSnapshot(likesQuery, (likeSnapshot) => {
+            const likeCount = likeSnapshot.docs.length;
+            let likeId = 0;
+            const isLiked = likeSnapshot.docs.some((likeDoc) => {
+              if (likeDoc.data().userId === user.uid) {
+                likeId = likeDoc.id;
+                return true;
               }
-              return reply;
+              return false;
+            });
+
+            // 부모 상태 업데이트
+            setReplies((prevReplies) => {
+              return prevReplies.map((reply) => {
+                if (reply.id === replyId) {
+                  return {
+                    ...reply,
+                    like: { isLiked, count: likeCount, id: likeId },
+                  };
+                }
+                return reply;
+              });
             });
           });
+
+          return {
+            ...replyData,
+            id: replyId,
+            like: { isLiked: false, count: 0 }, // 초기값 설정
+          };
         });
 
-        return {
-          ...replyData,
-          id: replyId,
-          like: { isLiked: false, count: 0 }, // 초기값 설정
-        };
+        // 부모 상태에 트윗 데이터 설정
+        setReplies(repliesData);
       });
 
-      // 부모 상태에 트윗 데이터 설정
-      setReplies(repliesData);
-    });
-
-    return () => {
-      unsubscribeReplies();
-    };
+      return () => {
+        unsubscribeReplies();
+      };
+    }
   }, []);
 
   return (

@@ -4,12 +4,13 @@ import {
   deleteDoc,
   doc,
   getDocs,
+  onSnapshot,
   query,
   where,
 } from "firebase/firestore";
 import { auth, db, storage } from "../../firebase";
 import "./tweet.css";
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import { IconButton, Menu, MenuItem } from "@mui/material";
 import MoreVertIcon from "@mui/icons-material/MoreVert";
 import EditTweetDialog from "./edit/edit-tweet-dialog";
@@ -17,14 +18,94 @@ import { deleteObject, ref } from "firebase/storage";
 import { timeAgo } from "../../common/time-ago";
 import TweetReplyDialog from "./reply/tweet-reply-dialog";
 import ReTweetDialog from "./retweet/tweet-retweet-dialog";
+import Tweet from "./tweet";
 
-export default function Tweet({ isReply, isLast, isRetweet, ...data }) {
+export default function ReTweet({ isReply, isLast, isRetweet, ...data }) {
   const [isOpen, setIsOpen] = useState("");
   const [isOpenReply, setIsOpenReply] = useState(false);
   const [isOpenReTweet, setIsOpenReTweet] = useState(false);
   const [anchorEl, setAnchorEl] = useState(null);
   const isMenuOpen = Boolean(anchorEl);
   const user = auth.currentUser;
+  const [retweet, setRetweet] = useState({});
+
+  useEffect(() => {
+    if (data.retweetId) {
+      const repliesQuery = query(
+        collection(db, "tweets"),
+        where("__name__", "==", data.retweetId)
+      );
+
+      const unsubscribeReplies = onSnapshot(repliesQuery, (snapshot) => {
+        const retweetsData = snapshot.docs.map((doc) => {
+          const retweetData = doc.data();
+          const retweetId = doc.id;
+
+          // 자식 컬렉션(예: likes) 스냅샷
+          const likesQuery = query(
+            collection(db, `likes`),
+            where("tweetId", "==", retweetId)
+          );
+
+          onSnapshot(likesQuery, (likeSnapshot) => {
+            const likeCount = likeSnapshot.docs.length;
+            let likeId = 0;
+            const isLiked = likeSnapshot.docs.some((likeDoc) => {
+              if (likeDoc.data().userId === user.uid) {
+                likeId = likeDoc.id;
+                return true;
+              }
+              return false;
+            });
+
+            // 부모 상태 업데이트
+            setRetweet((prevRetweet) => {
+              if (prevRetweet.id === retweetId) {
+                return {
+                  ...prevRetweet,
+                  like: { isLiked, count: likeCount, id: likeId },
+                };
+              }
+              return retweet;
+            });
+          });
+
+          // 댓글 쿼리
+          const repliesQuery = query(
+            collection(db, "replies"),
+            where("tweetId", "==", retweetId)
+          );
+
+          onSnapshot(repliesQuery, (replySnapshot) => {
+            const replyCount = replySnapshot.docs.length;
+
+            setRetweet((prevTweet) => {
+              if (prevTweet.id === retweetId) {
+                return {
+                  ...prevTweet,
+                  reply: { count: replyCount },
+                };
+              }
+              return prevTweet;
+            });
+          });
+
+          return {
+            ...retweetData,
+            id: retweetId,
+            like: { isLiked: false, count: 0 }, // 초기값 설정
+          };
+        });
+
+        // 부모 상태에 트윗 데이터 설정
+        setRetweet(retweetsData[0]);
+      });
+
+      return () => {
+        unsubscribeReplies();
+      };
+    }
+  }, []);
 
   const onDelete = async () => {
     const ok = confirm("Are you sure you want to delete this tweet?");
@@ -110,8 +191,7 @@ export default function Tweet({ isReply, isLast, isRetweet, ...data }) {
     setIsOpenReply(true);
   };
 
-  const onClickReTweetDialog = (e) => {
-    e.stopPropagation();
+  const onClickReTweetDialog = () => {
     setIsOpenReTweet(true);
   };
 
@@ -124,7 +204,6 @@ export default function Tweet({ isReply, isLast, isRetweet, ...data }) {
           borderRadius: isRetweet ? "12px" : "",
           cursor: isReply ? "" : "pointer",
         }}
-        onClick={isReply ? "" : onClickRelpyDialog}
       >
         <div className="top">
           <div className="left">
@@ -202,98 +281,103 @@ export default function Tweet({ isReply, isLast, isRetweet, ...data }) {
           )}
         </div>
         <div className="middle">
-          <p className="payload">{data.tweet}</p>
+          <p className="payload" onClick={onClickRelpyDialog}>
+            {data.tweet}
+          </p>
           {data.photo ? (
-            <img className="photo" src={data.photo} />
+            <img
+              className="photo"
+              src={data.photo}
+              onClick={onClickRelpyDialog}
+            />
           ) : (
-            <div></div>
+            <div onClick={onClickRelpyDialog}></div>
           )}
-        </div>
-        {isRetweet ? (
-          <></>
-        ) : (
-          <div className="bottom">
-            {data.like.isLiked ? (
-              <div
-                className="like-btn"
-                onClick={isRetweet ? undefined : onClickLike}
-                style={{ cursor: isRetweet ? "auto" : "pointer" }}
-              >
-                <svg
-                  xmlns="http://www.w3.org/2000/svg"
-                  viewBox="0 0 24 24"
-                  fill="currentColor"
-                  className="size-6 active"
-                >
-                  <path d="m11.645 20.91-.007-.003-.022-.012a15.247 15.247 0 0 1-.383-.218 25.18 25.18 0 0 1-4.244-3.17C4.688 15.36 2.25 12.174 2.25 8.25 2.25 5.322 4.714 3 7.688 3A5.5 5.5 0 0 1 12 5.052 5.5 5.5 0 0 1 16.313 3c2.973 0 5.437 2.322 5.437 5.25 0 3.925-2.438 7.111-4.739 9.256a25.175 25.175 0 0 1-4.244 3.17 15.247 15.247 0 0 1-.383.219l-.022.012-.007.004-.003.001a.752.752 0 0 1-.704 0l-.003-.001Z" />
-                </svg>
-              </div>
-            ) : (
-              <div
-                className="like-btn"
-                onClick={isRetweet ? undefined : onClickLike}
-                style={{ cursor: isRetweet ? "auto" : "pointer" }}
-              >
-                <svg
-                  xmlns="http://www.w3.org/2000/svg"
-                  fill="none"
-                  viewBox="0 0 24 24"
-                  strokeWidth={1.5}
-                  stroke="currentColor"
-                  className="size-6"
-                >
-                  <path
-                    strokeLinecap="round"
-                    strokeLinejoin="round"
-                    d="M21 8.25c0-2.485-2.099-4.5-4.688-4.5-1.935 0-3.597 1.126-4.312 2.733-.715-1.607-2.377-2.733-4.313-2.733C5.1 3.75 3 5.765 3 8.25c0 7.22 9 12 9 12s9-4.78 9-12Z"
-                  />
-                </svg>
-              </div>
-            )}
-            {data.like.count}
-            <div
-              className="reply-btn"
-              style={{ cursor: isRetweet ? "auto" : "pointer" }}
-            >
-              <svg
-                xmlns="http://www.w3.org/2000/svg"
-                fill="none"
-                viewBox="0 0 24 24"
-                strokeWidth={1.5}
-                stroke="currentColor"
-                className="size-6"
-              >
-                <path
-                  strokeLinecap="round"
-                  strokeLinejoin="round"
-                  d="M8.625 12a.375.375 0 1 1-.75 0 .375.375 0 0 1 .75 0Zm0 0H8.25m4.125 0a.375.375 0 1 1-.75 0 .375.375 0 0 1 .75 0Zm0 0H12m4.125 0a.375.375 0 1 1-.75 0 .375.375 0 0 1 .75 0Zm0 0h-.375M21 12c0 4.556-4.03 8.25-9 8.25a9.764 9.764 0 0 1-2.555-.337A5.972 5.972 0 0 1 5.41 20.97a5.969 5.969 0 0 1-.474-.065 4.48 4.48 0 0 0 .978-2.025c.09-.457-.133-.901-.467-1.226C3.93 16.178 3 14.189 3 12c0-4.556 4.03-8.25 9-8.25s9 3.694 9 8.25Z"
-                />
-              </svg>
-            </div>
-            {data.reply.count}
-            <div
-              className="re-tweet-btn"
-              onClick={isRetweet ? undefined : onClickReTweetDialog}
-              style={{ cursor: isRetweet ? "auto" : "pointer" }}
-            >
-              <svg
-                xmlns="http://www.w3.org/2000/svg"
-                fill="none"
-                viewBox="0 0 24 24"
-                strokeWidth={1.5}
-                stroke="currentColor"
-                className="size-6"
-              >
-                <path
-                  strokeLinecap="round"
-                  strokeLinejoin="round"
-                  d="M19.5 12c0-1.232-.046-2.453-.138-3.662a4.006 4.006 0 0 0-3.7-3.7 48.678 48.678 0 0 0-7.324 0 4.006 4.006 0 0 0-3.7 3.7c-.017.22-.032.441-.046.662M19.5 12l3-3m-3 3-3-3m-12 3c0 1.232.046 2.453.138 3.662a4.006 4.006 0 0 0 3.7 3.7 48.656 48.656 0 0 0 7.324 0 4.006 4.006 0 0 0 3.7-3.7c.017-.22.032-.441.046-.662M4.5 12l3 3m-3-3-3 3"
-                />
-              </svg>
-            </div>
-            {data.retweet.count}
+          <div className="re-tweet">
+            <Tweet isLast={true} isRetweet={true} {...retweet} />
           </div>
-        )}
+        </div>
+        <div className="bottom">
+          {data.like.isLiked ? (
+            <div
+              className="like-btn"
+              onClick={isRetweet ? undefined : onClickLike}
+              style={{ cursor: isRetweet ? "auto" : "pointer" }}
+            >
+              <svg
+                xmlns="http://www.w3.org/2000/svg"
+                viewBox="0 0 24 24"
+                fill="currentColor"
+                className="size-6 active"
+              >
+                <path d="m11.645 20.91-.007-.003-.022-.012a15.247 15.247 0 0 1-.383-.218 25.18 25.18 0 0 1-4.244-3.17C4.688 15.36 2.25 12.174 2.25 8.25 2.25 5.322 4.714 3 7.688 3A5.5 5.5 0 0 1 12 5.052 5.5 5.5 0 0 1 16.313 3c2.973 0 5.437 2.322 5.437 5.25 0 3.925-2.438 7.111-4.739 9.256a25.175 25.175 0 0 1-4.244 3.17 15.247 15.247 0 0 1-.383.219l-.022.012-.007.004-.003.001a.752.752 0 0 1-.704 0l-.003-.001Z" />
+              </svg>
+            </div>
+          ) : (
+            <div
+              className="like-btn"
+              onClick={isRetweet ? undefined : onClickLike}
+              style={{ cursor: isRetweet ? "auto" : "pointer" }}
+            >
+              <svg
+                xmlns="http://www.w3.org/2000/svg"
+                fill="none"
+                viewBox="0 0 24 24"
+                strokeWidth={1.5}
+                stroke="currentColor"
+                className="size-6"
+              >
+                <path
+                  strokeLinecap="round"
+                  strokeLinejoin="round"
+                  d="M21 8.25c0-2.485-2.099-4.5-4.688-4.5-1.935 0-3.597 1.126-4.312 2.733-.715-1.607-2.377-2.733-4.313-2.733C5.1 3.75 3 5.765 3 8.25c0 7.22 9 12 9 12s9-4.78 9-12Z"
+                />
+              </svg>
+            </div>
+          )}
+          {data.like.count}
+          <div
+            className="reply-btn"
+            style={{ cursor: isRetweet ? "auto" : "pointer" }}
+          >
+            <svg
+              xmlns="http://www.w3.org/2000/svg"
+              fill="none"
+              viewBox="0 0 24 24"
+              strokeWidth={1.5}
+              stroke="currentColor"
+              className="size-6"
+            >
+              <path
+                strokeLinecap="round"
+                strokeLinejoin="round"
+                d="M8.625 12a.375.375 0 1 1-.75 0 .375.375 0 0 1 .75 0Zm0 0H8.25m4.125 0a.375.375 0 1 1-.75 0 .375.375 0 0 1 .75 0Zm0 0H12m4.125 0a.375.375 0 1 1-.75 0 .375.375 0 0 1 .75 0Zm0 0h-.375M21 12c0 4.556-4.03 8.25-9 8.25a9.764 9.764 0 0 1-2.555-.337A5.972 5.972 0 0 1 5.41 20.97a5.969 5.969 0 0 1-.474-.065 4.48 4.48 0 0 0 .978-2.025c.09-.457-.133-.901-.467-1.226C3.93 16.178 3 14.189 3 12c0-4.556 4.03-8.25 9-8.25s9 3.694 9 8.25Z"
+              />
+            </svg>
+          </div>
+          {data.reply.count}
+          <div
+            className="re-tweet-btn"
+            onClick={isRetweet ? undefined : onClickReTweetDialog}
+            style={{ cursor: isRetweet ? "auto" : "pointer" }}
+          >
+            <svg
+              xmlns="http://www.w3.org/2000/svg"
+              fill="none"
+              viewBox="0 0 24 24"
+              strokeWidth={1.5}
+              stroke="currentColor"
+              className="size-6"
+            >
+              <path
+                strokeLinecap="round"
+                strokeLinejoin="round"
+                d="M19.5 12c0-1.232-.046-2.453-.138-3.662a4.006 4.006 0 0 0-3.7-3.7 48.678 48.678 0 0 0-7.324 0 4.006 4.006 0 0 0-3.7 3.7c-.017.22-.032.441-.046.662M19.5 12l3-3m-3 3-3-3m-12 3c0 1.232.046 2.453.138 3.662a4.006 4.006 0 0 0 3.7 3.7 48.656 48.656 0 0 0 7.324 0 4.006 4.006 0 0 0 3.7-3.7c.017-.22.032-.441.046-.662M4.5 12l3 3m-3-3-3 3"
+              />
+            </svg>
+          </div>
+          {data.retweet.count}
+        </div>
       </div>
       <EditTweetDialog
         isOpen={isOpen === "edit"}

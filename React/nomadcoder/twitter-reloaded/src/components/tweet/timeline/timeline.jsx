@@ -10,6 +10,7 @@ import {
 } from "firebase/firestore";
 import { auth, db } from "../../../firebase";
 import Tweet from "../tweet";
+import ReTweet from "../re-tweet";
 
 export default function Timeline() {
   const [tweets, setTweet] = useState([]);
@@ -27,65 +28,89 @@ export default function Timeline() {
         const tweetData = doc.data();
         const tweetId = doc.id;
 
-        // 자식 컬렉션(예: likes) 스냅샷
-        const likesQuery = query(
-          collection(db, `likes`),
-          where("tweetId", "==", tweetId)
-        );
-
-        onSnapshot(likesQuery, (likeSnapshot) => {
-          const likeCount = likeSnapshot.docs.length;
-          let likeId = 0;
-          const isLiked = likeSnapshot.docs.some((likeDoc) => {
-            if (likeDoc.data().userId === user.uid) {
-              likeId = likeDoc.id;
-              return true;
-            }
-            return false;
-          });
-
-          // 부모 상태 업데이트
-          setTweet((prevTweets) => {
-            return prevTweets.map((tweet) => {
-              if (tweet.id === tweetId) {
-                return {
-                  ...tweet,
-                  like: { isLiked, count: likeCount, id: likeId },
-                };
-              }
-              return tweet;
-            });
-          });
-        });
-
-        const relplyQuery = query(
-          collection(db, `replies`),
-          where("tweetId", "==", tweetId)
-        );
-
-        onSnapshot(relplyQuery, (replySnapshot) => {
-          const replyCount = replySnapshot.docs.length;
-
-          // 부모 상태 업데이트
-          setTweet((prevTweets) => {
-            return prevTweets.map((tweet) => {
-              if (tweet.id === tweetId) {
-                return {
-                  ...tweet,
-                  reply: { count: replyCount },
-                };
-              }
-              return tweet;
-            });
-          });
-        });
-
+        // 기본 트윗 데이터 설정
         return {
           ...tweetData,
           id: tweetId,
           like: { isLiked: false, count: 0 },
           reply: { count: 0 },
+          retweet: { count: 0 },
         };
+      });
+
+      // 좋아요, 댓글, 리트윗 수 업데이트
+      tweetsData.forEach((tweet) => {
+        // 좋아요 쿼리
+        const likesQuery = query(
+          collection(db, "likes"),
+          where("tweetId", "==", tweet.id)
+        );
+
+        onSnapshot(likesQuery, (likeSnapshot) => {
+          const likeCount = likeSnapshot.docs.length;
+          const isLiked = likeSnapshot.docs.some(
+            (likeDoc) => likeDoc.data().userId === user.uid
+          );
+
+          // 상태 업데이트
+          setTweet((prevTweets) => {
+            return prevTweets.map((prevTweet) => {
+              if (prevTweet.id === tweet.id) {
+                return {
+                  ...prevTweet,
+                  like: { isLiked, count: likeCount },
+                };
+              }
+              return prevTweet;
+            });
+          });
+        });
+
+        // 댓글 쿼리
+        const repliesQuery = query(
+          collection(db, "replies"),
+          where("tweetId", "==", tweet.id)
+        );
+
+        onSnapshot(repliesQuery, (replySnapshot) => {
+          const replyCount = replySnapshot.docs.length;
+
+          // 상태 업데이트
+          setTweet((prevTweets) => {
+            return prevTweets.map((prevTweet) => {
+              if (prevTweet.id === tweet.id) {
+                return {
+                  ...prevTweet,
+                  reply: { count: replyCount },
+                };
+              }
+              return prevTweet;
+            });
+          });
+        });
+
+        // 리트윗 쿼리
+        const retweetQuery = query(
+          collection(db, "tweets"),
+          where("retweetId", "==", tweet.id)
+        );
+
+        onSnapshot(retweetQuery, (retweetSnapshot) => {
+          const retweetCount = retweetSnapshot.docs.length;
+
+          // content 업데이트
+          setTweet((prevTweets) => {
+            return prevTweets.map((prevTweet) => {
+              if (prevTweet.id === tweet.id) {
+                return {
+                  ...prevTweet,
+                  retweet: { count: retweetCount },
+                };
+              }
+              return prevTweet;
+            });
+          });
+        });
       });
 
       // 부모 상태에 트윗 데이터 설정
@@ -99,13 +124,17 @@ export default function Timeline() {
 
   return (
     <div className="time-line scrollable">
-      {tweets.map((item, index) => (
-        <Tweet
-          key={item.id}
-          isLast={index === tweets.length - 1} // 마지막 인덱스인지 확인
-          {...item}
-        />
-      ))}
+      {tweets.map((item, index) =>
+        item.retweetId != undefined ? (
+          <ReTweet
+            key={item.id}
+            isLast={index === tweets.length - 1}
+            {...item}
+          />
+        ) : (
+          <Tweet key={item.id} isLast={index === tweets.length - 1} {...item} />
+        )
+      )}
     </div>
   );
 }

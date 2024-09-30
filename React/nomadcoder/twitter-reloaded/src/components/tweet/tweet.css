@@ -40,6 +40,7 @@
   display: flex;
   width: 100%;
   justify-content: center;
+  margin-bottom: 20px;
 }
 
 .edit-btn,
@@ -121,4 +122,40 @@
   left: 0;
   right: 0;
   background-color: black;
+}
+
+.retweet-dialog-content {
+  padding: 0px 20px;
+  display: flex;
+  flex-direction: column;
+  position: relative;
+  gap: 10px;
+}
+
+.retweet-dialog-content .submit-btn {
+  background-color: #1d9bf0;
+  color: white;
+  border: none;
+  padding: 10px 0px;
+  border-radius: 20px;
+  font-size: 16px;
+  cursor: pointer;
+  width: 100%;
+}
+
+.retweet-dialog-content .btn {
+  position: sticky;
+  bottom: 0;
+  left: 0;
+  right: 0;
+  background-color: black;
+  color: white;
+  border: none;
+  cursor: pointer;
+}
+
+.tweet .middle .re-tweet {
+  border: 1px solid white;
+  border-radius: 20px;
+  margin: 20px 0px;
 }
