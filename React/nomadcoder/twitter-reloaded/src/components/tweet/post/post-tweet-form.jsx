@@ -47,7 +47,7 @@ export default function PostTweetForm() {
         updateDoc(doc, { photo: url });
       }
 
-      setInput({});
+      setInput({ tweet: "", file: null });
     } catch (error) {
       console.log(error);
     } finally {

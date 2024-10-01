@@ -44,6 +44,12 @@ export default function Tweet({ isReply, isLast, isRetweet, ...data }) {
         collection(db, `likes`),
         where("tweetId", "==", data.id)
       );
+
+      const alarmQuery = query(
+        collection(db, "alarm"),
+        where("tweetId", "==", data.id)
+      );
+
       // tweets
       await deleteDoc(doc(db, "tweets", data.id));
 
@@ -63,6 +69,12 @@ export default function Tweet({ isReply, isLast, isRetweet, ...data }) {
       const likeSnapshot = await getDocs(likeQuery);
       likeSnapshot.forEach(async (item) => {
         await deleteDoc(doc(db, "likes", item.id));
+      });
+
+      // alarm
+      const alarmSnapshot = await getDocs(alarmQuery);
+      alarmSnapshot.forEach(async (item) => {
+        await deleteDoc(doc(db, "alarm", item.id));
       });
     } catch (error) {
       console.log(error);
@@ -95,11 +107,33 @@ export default function Tweet({ isReply, isLast, isRetweet, ...data }) {
     e.stopPropagation();
 
     if (data.like.isLiked) {
-      await deleteDoc(doc(db, `likes`, data.like.id));
+      await deleteDoc(doc(db, "likes", data.like.id));
+
+      const alarmQuery = query(
+        collection(db, "alarm"),
+        where("tweetId", "==", data.id)
+      );
+      const alarmSnapshot = await getDocs(alarmQuery);
+      alarmSnapshot.forEach(async (item) => {
+        await deleteDoc(doc(db, "alarm", item.id));
+      });
     } else {
+      // 조아요
       await addDoc(collection(db, `likes`), {
         userId: user.uid,
         tweetId: data.id,
+        createdAt: Date.now(),
+      });
+
+      // 알람
+      const content = `${user.displayName}님이 ${
+        data.tweet.length > 10 ? data.tweet.substr(0, 10) + "..." : data.tweet
+      }글을 좋아합니다.`;
+      await addDoc(collection(db, "alarm"), {
+        userId: data.userId, // 조아요 당한 사람 uid
+        content: content,
+        tweetId: data.id,
+        isChecked: false,
         createdAt: Date.now(),
       });
     }

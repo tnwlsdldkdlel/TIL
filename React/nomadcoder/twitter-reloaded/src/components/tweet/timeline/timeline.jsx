@@ -38,9 +38,7 @@ export default function Timeline() {
         };
       });
 
-      // 좋아요, 댓글, 리트윗 수 업데이트
       tweetsData.forEach((tweet) => {
-        // 좋아요 쿼리
         const likesQuery = query(
           collection(db, "likes"),
           where("tweetId", "==", tweet.id)
@@ -48,17 +46,21 @@ export default function Timeline() {
 
         onSnapshot(likesQuery, (likeSnapshot) => {
           const likeCount = likeSnapshot.docs.length;
-          const isLiked = likeSnapshot.docs.some(
-            (likeDoc) => likeDoc.data().userId === user.uid
-          );
+          let likeId = 0;
+          const isLiked = likeSnapshot.docs.some((likeDoc) => {
+            if (likeDoc.data().userId === user.uid) {
+              likeId = likeDoc.id;
+              return true;
+            }
+          });
 
-          // 상태 업데이트
+          // 좋아요 업데이트
           setTweet((prevTweets) => {
             return prevTweets.map((prevTweet) => {
               if (prevTweet.id === tweet.id) {
                 return {
                   ...prevTweet,
-                  like: { isLiked, count: likeCount },
+                  like: { isLiked: isLiked, count: likeCount, id: likeId },
                 };
               }
               return prevTweet;
@@ -66,7 +68,6 @@ export default function Timeline() {
           });
         });
 
-        // 댓글 쿼리
         const repliesQuery = query(
           collection(db, "replies"),
           where("tweetId", "==", tweet.id)
@@ -75,7 +76,7 @@ export default function Timeline() {
         onSnapshot(repliesQuery, (replySnapshot) => {
           const replyCount = replySnapshot.docs.length;
 
-          // 상태 업데이트
+          // 댓글 업데이트
           setTweet((prevTweets) => {
             return prevTweets.map((prevTweet) => {
               if (prevTweet.id === tweet.id) {
@@ -89,7 +90,6 @@ export default function Timeline() {
           });
         });
 
-        // 리트윗 쿼리
         const retweetQuery = query(
           collection(db, "tweets"),
           where("retweetId", "==", tweet.id)

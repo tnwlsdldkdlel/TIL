@@ -1,9 +1,16 @@
 import { Link, Outlet, useNavigate } from "react-router-dom";
 import "./layout.css";
-import { auth } from "../../firebase";
+import { auth, db } from "../../firebase";
+import { useEffect, useState } from "react";
+import { collection, onSnapshot, query, where } from "firebase/firestore";
+import AlarmDialog from "../tweet/alarm/alarm-dialog";
 
 export default function Layout() {
   const navigate = useNavigate();
+  const user = auth.currentUser;
+  const [alarm, setAlarm] = useState(0);
+  const [alramOpen, setAlarmOpen] = useState(false);
+
   const onLogout = async () => {
     const ok = confirm("Are you sure you want to log out?");
 
@@ -12,6 +19,31 @@ export default function Layout() {
       navigate("/login", { replace: true });
     }
   };
+
+  useEffect(() => {
+    const repliesQuery = query(
+      collection(db, "alarm"),
+      where("isChecked", "==", false),
+      where("userId", "==", user.uid)
+    );
+
+    onSnapshot(repliesQuery, (replySnapshot) => {
+      const alarmCount = replySnapshot.docs.length;
+      // 알람 업데이트
+      setAlarm(alarmCount);
+    });
+  }, []);
+
+  const onClickAlarm = () => {
+    setAlarmOpen(true);
+  };
+
+  const handleClose = () => {
+    setIsOpen("");
+    setIsOpenReply(false);
+    setIsOpenReTweet(false);
+  };
+
   return (
     <div className="layout">
       <div className="menu">
@@ -51,7 +83,34 @@ export default function Layout() {
             </svg>
           </div>
         </Link>
-
+        <div className="menu-item" onClick={onClickAlarm}>
+          <svg
+            xmlns="http://www.w3.org/2000/svg"
+            fill="none"
+            viewBox="0 0 24 24"
+            strokeWidth={1.5}
+            stroke="currentColor"
+            className="size-6"
+          >
+            <path
+              strokeLinecap="round"
+              strokeLinejoin="round"
+              d="M12 20.25c4.97 0 9-3.694 9-8.25s-4.03-8.25-9-8.25S3 7.444 3 12c0 2.104.859 4.023 2.273 5.48.432.447.74 1.04.586 1.641a4.483 4.483 0 0 1-.923 1.785A5.969 5.969 0 0 0 6 21c1.282 0 2.47-.402 3.445-1.087.81.22 1.668.337 2.555.337Z"
+            />
+            <circle cx="18" cy="18" r="5.5" fill="red" color="red" />
+            <text
+              x="18"
+              y="18"
+              textAnchor="middle"
+              fill="white"
+              fontSize="8"
+              dy=".35em"
+              fontWeight="50"
+            >
+              {alarm}
+            </text>
+          </svg>
+        </div>
         <div className="menu-item log-out" onClick={onLogout}>
           <svg
             xmlns="http://www.w3.org/2000/svg"
@@ -70,6 +129,7 @@ export default function Layout() {
         </div>
       </div>
       <Outlet />
+      <AlarmDialog isOpen={alramOpen} handleClose={handleClose} />
     </div>
   );
 }

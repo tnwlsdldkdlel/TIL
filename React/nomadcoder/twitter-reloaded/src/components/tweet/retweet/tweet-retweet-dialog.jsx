@@ -36,6 +36,18 @@ export default function ReTweetDialog({ isOpenReTweet, handleClose, ...data }) {
         retweetId: data.id,
       });
 
+      // 알람
+      const content = `${user.displayName}님이 ${
+        data.tweet.length > 10 ? data.tweet.substr(0, 10) + "..." : data.tweet
+      }글을 리트윗했습니다.`;
+      await addDoc(collection(db, "alarm"), {
+        userId: data.userId, // 리트윗 당한 사람 uid
+        content: content,
+        tweetId: data.id,
+        isChecked: false,
+        createdAt: Date.now(),
+      });
+
       handleClose();
     } catch (error) {
       console.log(error);
