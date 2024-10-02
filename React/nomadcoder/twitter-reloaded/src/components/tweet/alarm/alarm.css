@@ -1,9 +1,18 @@
 .alarm {
   display: flex;
-  gap: 10px;
-  margin: 10px 0px;
+  margin: 4px 0px;
+  justify-content: space-between;
 }
 
-.alarm .time {
+.alarm .left {
+  display: flex;
+  gap: 10px;
+}
+
+.alarm .left .time {
   color: #808080;
+}
+
+.alarm .right > img {
+  border-radius: 5px;
 }

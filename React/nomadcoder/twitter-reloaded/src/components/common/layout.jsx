@@ -4,12 +4,15 @@ import { auth, db } from "../../firebase";
 import { useEffect, useState } from "react";
 import { collection, onSnapshot, query, where } from "firebase/firestore";
 import AlarmDialog from "../tweet/alarm/alarm-dialog";
+import EditTweetDialog from "../tweet/edit/edit-tweet-dialog";
+import TweetReplyDialog from "../tweet/reply/tweet-reply-dialog";
 
 export default function Layout() {
   const navigate = useNavigate();
   const user = auth.currentUser;
   const [alarm, setAlarm] = useState(0);
   const [alramOpen, setAlarmOpen] = useState(false);
+  const [detailOpen, setDetailOpen] = useState(false);
 
   const onLogout = async () => {
     const ok = confirm("Are you sure you want to log out?");
@@ -39,9 +42,20 @@ export default function Layout() {
   };
 
   const handleClose = () => {
-    setIsOpen("");
-    setIsOpenReply(false);
-    setIsOpenReTweet(false);
+    setAlarmOpen(false);
+  };
+
+  const onClickDetail = () => {
+    handleClose();
+
+    setDetailOpen(true);
+  };
+
+  const getTweet = async () => {
+    const repliesQuery = query(
+      collection(db, "tweet"),
+      where("__name__", "==", data.id)
+    );
   };
 
   return (
@@ -129,7 +143,16 @@ export default function Layout() {
         </div>
       </div>
       <Outlet />
-      <AlarmDialog isOpen={alramOpen} handleClose={handleClose} />
+      <AlarmDialog
+        isOpen={alramOpen}
+        handleClose={handleClose}
+        onClickDetail={onClickDetail}
+      />
+      <TweetReplyDialog
+        isOpenReply={detailOpen}
+        handleClose={handleClose}
+        {...data}
+      />
     </div>
   );
 }
