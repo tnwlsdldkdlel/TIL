@@ -1,0 +1,66 @@
+.profile,
+.edit {
+  display: flex;
+  align-items: center;
+  flex-direction: column;
+  gap: 20px;
+}
+
+.edit .photo .avatar-upload,
+.profile .avatar-upload {
+  width: 80px;
+  overflow: hidden;
+  height: 80px;
+  border-radius: 50%;
+  background-color: #1d9bf0;
+  cursor: pointer;
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  svg {
+    width: 50px;
+  }
+}
+
+.edit .photo .avatar-upload > img,
+.profile .photo .avatar-upload > img {
+  width: 100%;
+}
+
+.edit .photo {
+  border-bottom: 1px solid white;
+}
+
+.edit .photo .avatar-input {
+  display: none;
+}
+
+.profile .photo .avatar-upload .name {
+  font-size: 22px;
+}
+
+.profile .my-tweets {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+  height: 700px;
+}
+
+.profile .edit-btn {
+  padding: 10px 0px;
+  background-color: #1d9bf0;
+  color: white;
+  text-align: center;
+  border-radius: 10px;
+  border: 1px solid #1d9bf0;
+  font-size: 14px;
+  font-weight: 600;
+  cursor: pointer;
+  width: -webkit-fill-available;
+}
+
+.edit .photo .profile-label {
+  color: #1d9bf0;
+  font-weight: 600;
+  cursor: pointer;
+}

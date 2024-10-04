@@ -3,7 +3,7 @@ import "./alarm.css";
 
 export default function Alarm({ onClickDetail, ...data }) {
   return (
-    <div className="alarm" onClick={onClickDetail}>
+    <div className={`alarm_${data.tweetId}`} onClick={onClickDetail}>
       <div className="left">
         <div>{data.content}</div>
         <div className="time">{timeAgo(data.createdAt)}</div>

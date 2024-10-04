@@ -9,6 +9,7 @@ import Login from "./pages/login";
 import CreateAccount from "./pages/create-account";
 import "./App.css";
 import ProtectedRoute from "./components/common/protected-route";
+import ProfileEdit from "./components/profile/Edit";
 
 const router = createBrowserRouter([
   {
@@ -21,6 +22,7 @@ const router = createBrowserRouter([
     children: [
       { path: "", element: <Home /> },
       { path: "profile", element: <Profile /> },
+      { path: "profile/edit", element: <ProfileEdit /> },
     ],
   },
   {

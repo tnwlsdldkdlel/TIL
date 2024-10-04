@@ -1,18 +1,18 @@
-.alarm {
+[class^="alarm_"] {
   display: flex;
-  margin: 4px 0px;
+  margin: 4px 0;
   justify-content: space-between;
 }
 
-.alarm .left {
+[class^="alarm_"] .left {
   display: flex;
   gap: 10px;
 }
 
-.alarm .left .time {
+[class^="alarm_"] .left .time {
   color: #808080;
 }
 
-.alarm .right > img {
+[class^="alarm_"] .right > img {
   border-radius: 5px;
 }

@@ -10,7 +10,7 @@ import {
 } from "firebase/firestore";
 import Alarm from "./alarm";
 
-export default function AlarmDialog({ isOpen, handleClose }) {
+export default function AlarmDialog({ isOpen, handleClose, onClickDetail }) {
   const [alarms, setAlarms] = useState([]);
   const user = auth.currentUser;
 
@@ -89,7 +89,7 @@ export default function AlarmDialog({ isOpen, handleClose }) {
         <DialogContent className="scrollable">
           {alarms.map((alarm) => {
             return (
-              <Alarm key={alarm.id} handleClose={handleClose} {...alarm} />
+              <Alarm key={alarm.id} onClickDetail={onClickDetail} {...alarm} />
             );
           })}
         </DialogContent>
