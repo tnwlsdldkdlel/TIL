@@ -3,11 +3,11 @@
   display: flex;
   align-items: center;
   flex-direction: column;
-  gap: 20px;
+  gap: 15px;
 }
 
 .edit .photo .avatar-upload,
-.profile .avatar-upload {
+.profile .top .avatar-upload {
   width: 80px;
   overflow: hidden;
   height: 80px;
@@ -22,21 +22,44 @@
   }
 }
 
-.edit .photo .avatar-upload > img,
-.profile .photo .avatar-upload > img {
-  width: 100%;
+.profile .top {
+  display: flex;
+  flex-direction: row;
+  gap: 20px;
+  width: fit-content;
 }
 
-.edit .photo {
-  border-bottom: 1px solid white;
+.profile .top .count {
+  display: flex;
+  flex-direction: row;
+  align-items: center;
+  font-size: large;
+  gap: 50px;
+  text-align: center;
+}
+
+.profile .top .count .value {
+  font-weight: bolder;
+}
+
+.edit .photo .avatar-upload > img,
+.profile .top .avatar-upload > img {
+  width: 100%;
 }
 
 .edit .photo .avatar-input {
   display: none;
 }
 
-.profile .photo .avatar-upload .name {
-  font-size: 22px;
+.profile .down {
+  display: flex;
+  flex-direction: column;
+  justify-content: left;
+  width: 50%;
+}
+
+.profile .down .name {
+  text-align: left;
 }
 
 .profile .my-tweets {
@@ -47,6 +70,68 @@
 }
 
 .profile .edit-btn {
+  padding: 10px 0px;
+  background-color: #808080;
+  color: white;
+  text-align: center;
+  border-radius: 10px;
+  border: unset;
+  font-size: 14px;
+  font-weight: 600;
+  cursor: pointer;
+  width: -webkit-fill-available;
+}
+
+.profile .intro {
+  color: #808080;
+}
+
+.edit .photo .profile-label {
+  color: #1d9bf0;
+  font-weight: 600;
+  cursor: pointer;
+  margin-top: 20px;
+}
+
+.edit .line {
+  width: 100%;
+  border-bottom: 1px solid #808080;
+}
+
+.edit-form {
+  display: flex;
+  width: 100%;
+  flex-direction: column;
+}
+
+.edit-form .col {
+  display: flex;
+  gap: 3px;
+  width: 100%;
+}
+
+.edit-form .col .key {
+  width: 300px;
+}
+
+.edit-form .col .value {
+  border: none;
+  border-bottom: 1px solid white;
+  background-color: black;
+  border-radius: 2px;
+  width: 100%;
+  color: white;
+  &:focus {
+    outline: none;
+  }
+}
+
+.btn {
+  width: 100%;
+  margin-top: 100px;
+}
+
+.btn .edit-btn {
   padding: 10px 0px;
   background-color: #1d9bf0;
   color: white;
@@ -59,8 +144,22 @@
   width: -webkit-fill-available;
 }
 
-.edit .photo .profile-label {
+.btn .cancel-btn {
+  padding: 10px 0px;
   color: #1d9bf0;
+  text-align: center;
+  border-radius: 10px;
+  border: 1px solid #1d9bf0;
+  background-color: black;
+  font-size: 14px;
   font-weight: 600;
   cursor: pointer;
+  width: -webkit-fill-available;
+}
+
+.error-text {
+  font-weight: 600;
+  color: tomato;
+  text-align: center;
+  margin-top: 20px;
 }

@@ -1,5 +1,5 @@
 import { useState } from "react";
-import "../post/post-tweet-form.css";
+import "../edit/post-tweet-form.css";
 import { auth, db, storage } from "../../../firebase";
 import { doc, updateDoc } from "firebase/firestore";
 import {

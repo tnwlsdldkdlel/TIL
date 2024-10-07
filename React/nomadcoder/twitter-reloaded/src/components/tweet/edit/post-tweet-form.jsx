@@ -36,7 +36,6 @@ export default function PostTweetForm() {
         tweet: input.tweet,
         createdAt: Date.now(),
         updatedAt: Date.now(),
-        username: user.displayName || "Anonymous",
         userId: user.uid,
       });
 
@@ -61,13 +60,13 @@ export default function PostTweetForm() {
         rows={5}
         maxLength={180}
         className="text-area"
-        placeholder="What is happening?"
+        placeholder="무슨 일이 일어나고 있나요?"
         name="tweet"
         value={input.tweet}
         onChange={onChange}
       ></textarea>
       <label className="file-btn" htmlFor="file">
-        {input.file ? "Add photo added ✅" : "Add photo"}
+        {input.file ? "사집업로드 완료 ✅" : "사진 업로드"}
       </label>
       <input
         className="file-input"
@@ -80,7 +79,7 @@ export default function PostTweetForm() {
       <input
         className="submit-btn"
         type="submit"
-        value={isLoading ? "Posting..." : "Post Tweet"}
+        value={isLoading ? "포스팅 중..." : "포스팅"}
         onClick={onSubmit}
       ></input>
     </form>

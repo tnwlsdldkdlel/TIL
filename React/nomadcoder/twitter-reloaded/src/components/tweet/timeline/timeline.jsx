@@ -35,10 +35,40 @@ export default function Timeline() {
           like: { isLiked: false, count: 0 },
           reply: { count: 0 },
           retweet: { count: 0 },
+          user: { id: tweetData.userId, name: "", photo: "" },
         };
       });
 
       tweetsData.forEach((tweet) => {
+        delete tweet.userId;
+
+        const userQuery = query(
+          collection(db, "user"),
+          where("id", "==", tweet.user.id)
+        );
+
+        onSnapshot(userQuery, (snapshot) => {
+          snapshot.docs.forEach((doc) => {
+            const userInfo = doc.data();
+
+            setTweet((prevTweets) => {
+              return prevTweets.map((prevTweet) => {
+                if (prevTweet.user.id === userInfo.id) {
+                  return {
+                    ...prevTweet,
+                    user: {
+                      id: userInfo.id,
+                      name: userInfo.name,
+                      photo: userInfo.photo,
+                    },
+                  };
+                }
+                return prevTweet;
+              });
+            });
+          });
+        });
+
         const likesQuery = query(
           collection(db, "likes"),
           where("tweetId", "==", tweet.id)

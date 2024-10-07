@@ -6,11 +6,25 @@
 .tweet .top {
   display: flex;
   justify-content: space-between;
+  cursor: auto;
 }
 
 .tweet .top .left {
   display: flex;
   gap: 10px;
+  align-items: center;
+}
+
+.tweet .top .left > div {
+  cursor: pointer;
+}
+
+.tweet .top .left .photo {
+  width: 30px;
+  overflow: hidden;
+  height: 30px;
+  border-radius: 50%;
+  background-color: #1d9bf0;
 }
 
 .tweet .top .left .time {
@@ -23,6 +37,7 @@
   display: flex;
   width: 100%;
   gap: 10px;
+  cursor: pointer;
 }
 
 .tweet .right .menu .btn {

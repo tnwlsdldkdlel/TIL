@@ -3,6 +3,7 @@ import { auth, storage } from "../../firebase";
 import "../../pages/profile.css";
 import { getDownloadURL, ref, uploadBytes } from "firebase/storage";
 import { updateProfile } from "firebase/auth";
+import EditForm from "./eidt-form";
 
 export default function ProfileEdit() {
   const user = auth.currentUser;
@@ -58,6 +59,8 @@ export default function ProfileEdit() {
           onChange={onAvatarChange}
         />
       </div>
+      <div className="line"></div>
+      <EditForm></EditForm>
     </div>
   );
 }

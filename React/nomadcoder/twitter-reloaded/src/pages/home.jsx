@@ -1,4 +1,4 @@
-import PostTweetForm from "../components/tweet/post/post-tweet-form";
+import PostTweetForm from "../components/tweet/edit/post-tweet-form";
 import Timeline from "../components/tweet/timeline/timeline";
 
 export default function Home() {
