@@ -67,6 +67,7 @@
   flex-direction: column;
   gap: 10px;
   height: 700px;
+  width: -webkit-fill-available;
 }
 
 .profile .edit-btn {
@@ -162,4 +163,17 @@
   color: tomato;
   text-align: center;
   margin-top: 20px;
+}
+
+.profile .follow-btn {
+  padding: 10px 0px;
+  background-color: #1d9bf0;
+  color: white;
+  text-align: center;
+  border-radius: 10px;
+  border: unset;
+  font-size: 14px;
+  font-weight: 600;
+  cursor: pointer;
+  width: -webkit-fill-available;
 }

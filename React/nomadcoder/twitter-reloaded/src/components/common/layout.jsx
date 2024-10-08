@@ -92,6 +92,7 @@ export default function Layout() {
           like: { isLiked: false, count: 0 },
           reply: { count: 0 },
           retweet: { count: 0 },
+          user: { id: tweetData.userId, name: "", photo: "" },
         };
       });
 

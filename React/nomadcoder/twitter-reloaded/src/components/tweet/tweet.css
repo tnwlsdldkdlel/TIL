@@ -7,6 +7,7 @@
   display: flex;
   justify-content: space-between;
   cursor: auto;
+  width: -webkit-fill-available !important;
 }
 
 .tweet .top .left {
@@ -25,6 +26,8 @@
   height: 30px;
   border-radius: 50%;
   background-color: #1d9bf0;
+  display: flex;
+  margin-bottom: unset !important;
 }
 
 .tweet .top .left .time {
@@ -98,6 +101,7 @@
   cursor: pointer;
   display: flex;
   gap: 10px;
+  justify-items: center;
 }
 
 .tweet .bottom .like-btn .active {

@@ -9,6 +9,7 @@ import {
   where,
 } from "firebase/firestore";
 import Alarm from "./alarm";
+import FollowAlarm from "./follow-alarm";
 
 export default function AlarmDialog({ isOpen, handleClose, onClickDetail }) {
   const [alarms, setAlarms] = useState([]);
@@ -31,23 +32,81 @@ export default function AlarmDialog({ isOpen, handleClose, onClickDetail }) {
       setAlarms(alarmsData);
 
       alarmsData.forEach((alarm) => {
-        const tweetQuery = query(
-          collection(db, "tweets"),
-          where("__name__", "==", alarm.tweetId),
-          limit(1)
+        if (alarm.tweetId) {
+          const tweetQuery = query(
+            collection(db, "tweets"),
+            where("__name__", "==", alarm.tweetId),
+            limit(1)
+          );
+
+          onSnapshot(tweetQuery, (snapshot) => {
+            const tweetId = snapshot.docs[0].id;
+            if (tweetId === alarm.tweetId) {
+              const photo = snapshot.docs[0].data().photo;
+
+              setAlarms((prev) => {
+                return prev.map((item) => {
+                  if (item.id === alarm.id) {
+                    return {
+                      ...item,
+                      photo: photo,
+                    };
+                  }
+
+                  return item;
+                });
+              });
+            }
+          });
+        }
+
+        if (alarm.targetId) {
+          const tweetQuery = query(
+            collection(db, "relation"),
+            where("targetId", "==", user.uid)
+          );
+
+          onSnapshot(tweetQuery, (snapshot) => {
+            const relationId = snapshot.docs[0].id;
+            const relationData = snapshot.docs[0].data();
+
+            if (relationData.targetId === user.uid) {
+              setAlarms((prev) => {
+                return prev.map((item) => {
+                  if (item.id === alarm.id) {
+                    return {
+                      ...item,
+                      relation: {
+                        id: relationId,
+                        isFollowing: relationData.isFollowing,
+                      },
+                    };
+                  }
+
+                  return item;
+                });
+              });
+            }
+          });
+        }
+
+        const userQuery = query(
+          collection(db, "user"),
+          where("id", "==", alarm.userId)
         );
 
-        onSnapshot(tweetQuery, (snapshot) => {
-          const tweetId = snapshot.docs[0].id;
-          if (tweetId === alarm.tweetId) {
-            const photo = snapshot.docs[0].data().photo;
+        onSnapshot(userQuery, (snapshot) => {
+          const userData = snapshot.docs[0].data();
+
+          if (userData.id === alarm.userId) {
+            const photo = userData.photo;
 
             setAlarms((prev) => {
               return prev.map((item) => {
                 if (item.id === alarm.id) {
                   return {
                     ...item,
-                    photo: photo,
+                    user: { photo: photo },
                   };
                 }
 
@@ -68,7 +127,7 @@ export default function AlarmDialog({ isOpen, handleClose, onClickDetail }) {
     <Fragment>
       <Dialog className="edit-dialog" open={isOpen} onClose={handleClose}>
         <DialogTitle className="dialog-title">
-          Alarm
+          알림
           <div className="close-btn" onClick={handleClose}>
             <svg
               xmlns="http://www.w3.org/2000/svg"
@@ -88,8 +147,14 @@ export default function AlarmDialog({ isOpen, handleClose, onClickDetail }) {
         </DialogTitle>
         <DialogContent className="scrollable">
           {alarms.map((alarm) => {
-            return (
+            return alarm.tweetId ? (
               <Alarm key={alarm.id} onClickDetail={onClickDetail} {...alarm} />
+            ) : (
+              <FollowAlarm
+                key={alarm.id}
+                onClickDetail={onClickDetail}
+                {...alarm}
+              ></FollowAlarm>
             );
           })}
         </DialogContent>

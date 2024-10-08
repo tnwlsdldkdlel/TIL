@@ -13,7 +13,7 @@ import {
   where,
 } from "firebase/firestore";
 
-export default function TweetReply({ isLast, ...reply }) {
+export default function TweetReply({ isLast, userId, tweetId, ...reply }) {
   const user = auth.currentUser;
   const [anchorEl, setAnchorEl] = useState(null);
   const isMenuOpen = Boolean(anchorEl);
@@ -47,6 +47,17 @@ export default function TweetReply({ isLast, ...reply }) {
       likeSnapshot.forEach(async (item) => {
         await deleteDoc(doc(db, "likes", item.id));
       });
+
+      const alramQuery = query(
+        collection(db, "alarm"),
+        where("replyId", "==", reply.id)
+      );
+
+      // alarm
+      const alarmSnapshot = await getDocs(alramQuery);
+      alarmSnapshot.forEach(async (item) => {
+        await deleteDoc(doc(db, "alarm", item.id));
+      });
     } catch (error) {
       console.log(error);
     }
@@ -57,10 +68,29 @@ export default function TweetReply({ isLast, ...reply }) {
 
     if (reply.like.isLiked) {
       await deleteDoc(doc(db, `likes`, reply.like.id));
+
+      const alarmQuery = query(
+        collection(db, "alarm"),
+        where("likeId", "==", reply.like.id)
+      );
+      const alarmSnapshot = await getDocs(alarmQuery);
+      alarmSnapshot.forEach(async (item) => {
+        await deleteDoc(doc(db, "alarm", item.id));
+      });
     } else {
-      await addDoc(collection(db, `likes`), {
+      const doc = await addDoc(collection(db, `likes`), {
         userId: user.uid,
         replyId: reply.id,
+        createdAt: Date.now(),
+      });
+
+      const content = `${user.displayName}님이 ${reply.reply}댓글을 좋아합니다.`;
+      await addDoc(collection(db, "alarm"), {
+        userId: userId, // 조아요 당한 사람 uid
+        content: content,
+        tweetId: tweetId,
+        likeId: doc.id,
+        isChecked: false,
         createdAt: Date.now(),
       });
     }
@@ -71,11 +101,11 @@ export default function TweetReply({ isLast, ...reply }) {
       <div className="tweet" style={{ borderBottom: isLast ? "none" : "" }}>
         <div className="top">
           <div className="left">
-            <div>{reply.username}</div>
+            <div>{reply.user.name}</div>
             <div className="time">{timeAgo(reply.createdAt)}</div>
           </div>
           <div className="right">
-            {reply.username === user.displayName ? (
+            {reply.user.name === user.displayName ? (
               <div className="menu" onClick={onClickMenu}>
                 <IconButton
                   className="btn"

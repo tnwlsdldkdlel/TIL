@@ -27,7 +27,7 @@ export default function CreateAccount() {
 
     try {
       if (input.password1 !== input.password2) {
-        setError("🙅‍♀️ 비밀번호가를 다시 확인해주세요.");
+        setError("🙅‍♀️ 비밀번호를 다시 확인해주세요.");
         return false;
       }
 

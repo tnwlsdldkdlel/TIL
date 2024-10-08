@@ -39,6 +39,9 @@ export default function Timeline() {
         };
       });
 
+      // 부모 상태에 트윗 데이터 설정
+      setTweet(tweetsData);
+
       tweetsData.forEach((tweet) => {
         delete tweet.userId;
 
@@ -142,9 +145,6 @@ export default function Timeline() {
           });
         });
       });
-
-      // 부모 상태에 트윗 데이터 설정
-      setTweet(tweetsData);
     });
 
     return () => {

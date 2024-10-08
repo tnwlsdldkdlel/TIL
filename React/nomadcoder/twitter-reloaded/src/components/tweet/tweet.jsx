@@ -29,7 +29,7 @@ export default function Tweet({ isReply, isLast, isRetweet, ...data }) {
   const user = auth.currentUser;
 
   const onDelete = async () => {
-    const ok = confirm("Are you sure you want to delete this tweet?");
+    const ok = confirm("정말로 삭제하실건가요?");
     if (!ok) {
       setIsOpen("");
       onClickCloseMenu();
@@ -113,7 +113,7 @@ export default function Tweet({ isReply, isLast, isRetweet, ...data }) {
 
       const alarmQuery = query(
         collection(db, "alarm"),
-        where("tweetId", "==", data.id)
+        where("likeId", "==", data.like.id)
       );
       const alarmSnapshot = await getDocs(alarmQuery);
       alarmSnapshot.forEach(async (item) => {
@@ -121,7 +121,7 @@ export default function Tweet({ isReply, isLast, isRetweet, ...data }) {
       });
     } else {
       // 조아요
-      await addDoc(collection(db, `likes`), {
+      const doc = await addDoc(collection(db, `likes`), {
         userId: user.uid,
         tweetId: data.id,
         createdAt: Date.now(),
@@ -132,9 +132,10 @@ export default function Tweet({ isReply, isLast, isRetweet, ...data }) {
         data.tweet.length > 10 ? data.tweet.substr(0, 10) + "..." : data.tweet
       }글을 좋아합니다.`;
       await addDoc(collection(db, "alarm"), {
-        userId: data.userId, // 조아요 당한 사람 uid
+        userId: data.user.id, // 조아요 당한 사람 uid
         content: content,
         tweetId: data.id,
+        likeId: doc.id,
         isChecked: false,
         createdAt: Date.now(),
       });
@@ -170,7 +171,7 @@ export default function Tweet({ isReply, isLast, isRetweet, ...data }) {
         <div className="top">
           <div className="left" onClick={onClickUser}>
             <div className="photo">
-              {data.user.photo ? (
+              {data.user != undefined && data.user.photo ? (
                 <img src={data.user.photo} />
               ) : (
                 <>
@@ -191,14 +192,14 @@ export default function Tweet({ isReply, isLast, isRetweet, ...data }) {
                 </>
               )}
             </div>
-            <div>{data.user.name}</div>
+            <div>{data.user != undefined ? data.user.name : ""}</div>
             <div className="time">{timeAgo(data.createdAt)}</div>
           </div>
           {isRetweet ? (
             <></>
           ) : (
             <div className="right">
-              {data.username === user.displayName ? (
+              {data.user.name === user.displayName ? (
                 <div className="menu" onClick={onClickMenu}>
                   <IconButton
                     className="btn"

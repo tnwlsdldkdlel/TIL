@@ -1,7 +1,13 @@
 import "./profile.css";
 import { auth, db } from "../firebase";
 import { useEffect, useState } from "react";
-import { collection, onSnapshot, query, where } from "firebase/firestore";
+import {
+  addDoc,
+  collection,
+  onSnapshot,
+  query,
+  where,
+} from "firebase/firestore";
 import Tweet from "../components/tweet/tweet";
 import ReTweet from "../components/tweet/re-tweet";
 import { useNavigate, useParams } from "react-router-dom";
@@ -19,9 +25,17 @@ export default function Profile() {
   });
 
   useEffect(() => {
+    let uid = "";
+
+    if (userId && userId !== user.uid) {
+      uid = userId;
+    } else {
+      uid = user.uid;
+    }
+
     const tweetsQuery = query(
       collection(db, "tweets"),
-      where("userId", "==", user.uid)
+      where("userId", "==", uid)
     );
 
     const unsubscribe = onSnapshot(tweetsQuery, (snapshot) => {
@@ -80,7 +94,7 @@ export default function Profile() {
           let likeId = 0;
           const likeCount = snapshot.docs.length;
           const isLiked = snapshot.docs.some((likeDoc) => {
-            if (likeDoc.data().userId === user.uid) {
+            if (likeDoc.data().userId === uid) {
               likeId = likeDoc.id;
               return true;
             }
@@ -151,12 +165,12 @@ export default function Profile() {
     return () => {
       unsubscribe();
     };
-  }, []);
+  }, [userId]);
 
   useEffect(() => {
     let uid = "";
 
-    if (userId) {
+    if (userId && userId !== user.uid) {
       uid = userId;
     } else {
       uid = user.uid;
@@ -179,18 +193,37 @@ export default function Profile() {
     return () => {
       unsubscribe();
     };
-  }, [user]);
+  }, [userId]);
 
   const onClickProfile = () => {
-    navigate("/profile/edit");
+    navigate(`/profile/edit`);
+  };
+
+  const onClickFollow = () => {
+    addDoc(collection(db, "relation"), {
+      userId: user.uid, // 팔로우 건 사람
+      targetId: userId, // 팔로우 당한 사람
+      isFollowing: false,
+      createdAt: Date.now(),
+      updatedAt: Date.now(),
+    });
+
+    const content = `${user.displayName}님이 팔로우하기 시작했습니다.`;
+    addDoc(collection(db, "alarm"), {
+      userId: userId, // 팔로우 당한 사람 uid
+      content: content,
+      targetId: user.uid, // 팔로우한 사람
+      isChecked: false,
+      createdAt: Date.now(),
+    });
   };
 
   return (
     <div className="profile">
       <div className="top">
         <label className="avatar-upload">
-          {info.avatar ? (
-            <img src={info.avatar} />
+          {info.photo ? (
+            <img src={info.photo} />
           ) : (
             <>
               <svg
@@ -229,9 +262,15 @@ export default function Profile() {
         <span className="name">{info.name}</span>
         {info.intro ? <span className="intro">{info.intro}</span> : <></>}
       </div>
-      <button className="edit-btn" onClick={onClickProfile}>
-        프로필편집
-      </button>
+      {!userId || userId === user.uid ? (
+        <button className="edit-btn" onClick={onClickProfile}>
+          프로필편집
+        </button>
+      ) : (
+        <button className="follow-btn" onClick={onClickFollow}>
+          팔로우
+        </button>
+      )}
       <div className="my-tweets scrollable">
         {tweet.map((item, index) =>
           item.retweetId != undefined ? (

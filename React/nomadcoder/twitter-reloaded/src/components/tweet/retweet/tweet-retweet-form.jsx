@@ -6,7 +6,7 @@ export default function RetweetForm({ retweet, onChange }) {
           rows={5}
           maxLength={180}
           className="text-area"
-          placeholder="What's on your mind?"
+          placeholder="무슨 일이 일어나고 있나요?"
           name="reply"
           value={retweet}
           onChange={onChange}

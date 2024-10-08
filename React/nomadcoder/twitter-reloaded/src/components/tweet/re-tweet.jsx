@@ -19,6 +19,7 @@ import { timeAgo } from "../../common/time-ago";
 import TweetReplyDialog from "./reply/tweet-reply-dialog";
 import ReTweetDialog from "./retweet/tweet-retweet-dialog";
 import Tweet from "./tweet";
+import { useNavigate } from "react-router-dom";
 
 export default function ReTweet({ isReply, isLast, isRetweet, ...data }) {
   const [isOpen, setIsOpen] = useState("");
@@ -28,6 +29,7 @@ export default function ReTweet({ isReply, isLast, isRetweet, ...data }) {
   const isMenuOpen = Boolean(anchorEl);
   const user = auth.currentUser;
   const [retweet, setRetweet] = useState({});
+  const navigate = useNavigate();
 
   useEffect(() => {
     const repliesQuery = query(
@@ -39,6 +41,32 @@ export default function ReTweet({ isReply, isLast, isRetweet, ...data }) {
       const retweetsData = snapshot.docs.map((doc) => {
         const retweetData = doc.data();
         const retweetId = doc.id;
+
+        // 유저정보
+        const userQuery = query(
+          collection(db, "user"),
+          where("id", "==", retweetData.userId)
+        );
+
+        onSnapshot(userQuery, (userSnapshot) => {
+          userSnapshot.docs.forEach((doc) => {
+            const userInfo = doc.data();
+
+            setRetweet((prevRetweet) => {
+              if (prevRetweet.id === retweetId) {
+                return {
+                  ...prevRetweet,
+                  user: {
+                    id: userInfo.id,
+                    name: userInfo.name,
+                    photo: userInfo.photo,
+                  },
+                };
+              }
+              return retweet;
+            });
+          });
+        });
 
         // 자식 컬렉션(예: likes) 스냅샷
         const likesQuery = query(
@@ -89,11 +117,33 @@ export default function ReTweet({ isReply, isLast, isRetweet, ...data }) {
           });
         });
 
+        const retweetQuery = query(
+          collection(db, "tweets"),
+          where("retweetId", "==", retweetId)
+        );
+
+        onSnapshot(retweetQuery, (retweetSnapshot) => {
+          const retweetCount = retweetSnapshot.docs.length;
+
+          // content 업데이트
+          setRetweet((prevTweet) => {
+            if (prevTweet.id === retweetId) {
+              return {
+                ...prevTweet,
+                retweet: { count: retweetCount },
+              };
+            }
+
+            return prevTweet;
+          });
+        });
+
         return {
           ...retweetData,
           id: retweetId,
           like: { isLiked: false, count: 0 },
-          retweet: { count: data.retweet.count },
+          retweet: { count: 0 },
+          user: { id: retweetData.userId, name: "", photo: "" },
         };
       });
 
@@ -194,6 +244,11 @@ export default function ReTweet({ isReply, isLast, isRetweet, ...data }) {
     setIsOpenReTweet(true);
   };
 
+  const onClickUser = (e) => {
+    e.stopPropagation();
+    navigate(`/profile/${data.user.id}`);
+  };
+
   return (
     <>
       <div
@@ -205,15 +260,37 @@ export default function ReTweet({ isReply, isLast, isRetweet, ...data }) {
         }}
       >
         <div className="top">
-          <div className="left">
-            <div>{data.username}</div>
+          <div className="left" onClick={onClickUser}>
+            <div className="photo">
+              {data.user.photo ? (
+                <img src={data.user.photo} />
+              ) : (
+                <>
+                  <svg
+                    xmlns="http://www.w3.org/2000/svg"
+                    fill="none"
+                    viewBox="0 0 24 24"
+                    strokeWidth={1.5}
+                    stroke="currentColor"
+                    className="size-6"
+                  >
+                    <path
+                      strokeLinecap="round"
+                      strokeLinejoin="round"
+                      d="M15.75 6a3.75 3.75 0 1 1-7.5 0 3.75 3.75 0 0 1 7.5 0ZM4.501 20.118a7.5 7.5 0 0 1 14.998 0A17.933 17.933 0 0 1 12 21.75c-2.676 0-5.216-.584-7.499-1.632Z"
+                    />
+                  </svg>
+                </>
+              )}
+            </div>
+            <div>{data.user.name}</div>
             <div className="time">{timeAgo(data.createdAt)}</div>
           </div>
           {isRetweet ? (
             <></>
           ) : (
             <div className="right">
-              {data.username === user.displayName ? (
+              {data.user.name === user.displayName ? (
                 <div className="menu" onClick={onClickMenu}>
                   <IconButton
                     className="btn"

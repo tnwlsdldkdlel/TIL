@@ -8,9 +8,8 @@ import {
 } from "firebase/auth";
 import { useEffect } from "react";
 import {
-  addDoc,
   collection,
-  doc,
+  getDocs,
   onSnapshot,
   query,
   updateDoc,
@@ -24,7 +23,7 @@ export default function EditForm() {
   const [input, setInput] = useState({
     name: user.displayName,
     intro: "",
-    prevInfo: "",
+    prevIntro: "",
     password1: "",
     password2: "",
     prevPassword: "",
@@ -40,13 +39,10 @@ export default function EditForm() {
     const unsubscribe = onSnapshot(infoQuery, (snapshot) => {
       snapshot.docs.map((doc) => {
         const infoData = doc.data();
-        const infoId = doc.id;
-
         setInput({
           ...input,
-          intro: infoData.intro,
-          prevInfo: infoData.intro,
-          introId: infoId,
+          intro: infoData.intro || "",
+          prevIntro: infoData.intro || "",
         });
       });
     });
@@ -86,21 +82,20 @@ export default function EditForm() {
           await updatePassword(user, input.password1);
         }
 
-        if (input.prevInfo.length === 0) {
-          await addDoc(collection(db, "info"), {
+        const userQuery = query(
+          collection(db, "user"),
+          where("id", "==", user.uid)
+        );
+
+        const querySnapshot = await getDocs(userQuery);
+        if (!querySnapshot.empty) {
+          const docRef = querySnapshot.docs[0].ref;
+
+          await updateDoc(docRef, {
             intro: input.intro,
-            createdAt: Date.now(),
+            name: input.name,
             updatedAt: Date.now(),
-            userId: user.uid,
           });
-        } else {
-          if (input.prevInfo !== input.intro) {
-            const docRef = doc(db, "info", input.introId);
-            await updateDoc(docRef, {
-              intro: input.intro,
-              updatedAt: Date.now(),
-            });
-          }
         }
 
         navigate("/profile");
@@ -108,6 +103,7 @@ export default function EditForm() {
         setError("비밀번호를 확인해주세요.");
       }
     } catch (error) {
+      console.log(error);
       if (error instanceof FirebaseError) {
         setError(error.message);
       }
@@ -174,7 +170,7 @@ export default function EditForm() {
         <button type="submit" className="edit-btn">
           수정
         </button>
-        <button className="cancel-btn" onClick={onClickCancel}>
+        <button type="button" className="cancel-btn" onClick={onClickCancel}>
           취소
         </button>
       </div>

@@ -2,17 +2,67 @@
   display: flex;
   margin: 4px 0;
   justify-content: space-between;
+  cursor: pointer;
+  height: 50px;
 }
 
 [class^="alarm_"] .left {
   display: flex;
   gap: 10px;
+  align-items: center !important;
 }
 
-[class^="alarm_"] .left .time {
+[class^="alarm_"] .left > img,
+[class^="alarm_"] .all > img {
+  border-radius: 50%;
+}
+
+[class^="alarm_"] .left .time,
+[class^="alarm_"] .all .time {
   color: #808080;
+}
+
+[class^="alarm_"] .right2 .mutual-follow-btn {
+  padding: 6px 0px;
+  background-color: #1d9bf0;
+  color: white;
+  text-align: center;
+  border-radius: 10px;
+  border: unset;
+  font-size: 13px;
+  font-weight: 600;
+  cursor: pointer;
 }
 
 [class^="alarm_"] .right > img {
   border-radius: 5px;
+}
+
+[class^="alarm_"] .right .no_img {
+  width: 50px;
+  height: 50px;
+}
+
+[class^="alarm_"] .all {
+  display: flex;
+  gap: 10px;
+  align-items: center !important;
+  width: 70%;
+}
+
+[class^="alarm_"] .right2 {
+  width: 30%;
+  align-content: center;
+}
+
+[class^="alarm_"] .right2 .follow-btn {
+  padding: 6px 0px;
+  background-color: #808080;
+  color: white;
+  text-align: center;
+  border-radius: 10px;
+  border: unset;
+  font-size: 13px;
+  font-weight: 600;
+  cursor: pointer;
 }

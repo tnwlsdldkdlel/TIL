@@ -57,10 +57,33 @@ export default function TweetReply({ isLast, ...reply }) {
 
     if (reply.like.isLiked) {
       await deleteDoc(doc(db, `likes`, reply.like.id));
+
+      const alarmQuery = query(
+        collection(db, "alarm"),
+        where("replyId", "==", reply.id)
+      );
+      const alarmSnapshot = await getDocs(alarmQuery);
+      alarmSnapshot.forEach(async (item) => {
+        await deleteDoc(doc(db, "alarm", item.id));
+      });
     } else {
       await addDoc(collection(db, `likes`), {
         userId: user.uid,
         replyId: reply.id,
+        createdAt: Date.now(),
+      });
+
+      // 알람
+      const content = `${user.displayName}님이 ${
+        reply.reply.length > 10
+          ? reply.reply.substr(0, 10) + "..."
+          : reply.reply
+      }댓글을 좋아합니다.`;
+      await addDoc(collection(db, "alarm"), {
+        userId: reply.userId, // 조아요 당한 사람 uid
+        content: content,
+        replyId: reply.id,
+        isChecked: false,
         createdAt: Date.now(),
       });
     }

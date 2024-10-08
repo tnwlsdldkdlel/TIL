@@ -31,7 +31,6 @@ export default function ReTweetDialog({ isOpenReTweet, handleClose, ...data }) {
         tweet: retweet,
         createdAt: Date.now(),
         updatedAt: Date.now(),
-        username: user.displayName || "Anonymous",
         userId: user.uid,
         retweetId: data.id,
       });
@@ -39,9 +38,9 @@ export default function ReTweetDialog({ isOpenReTweet, handleClose, ...data }) {
       // 알람
       const content = `${user.displayName}님이 ${
         data.tweet.length > 10 ? data.tweet.substr(0, 10) + "..." : data.tweet
-      }글을 리트윗했습니다.`;
+      }글을 리포스팅했습니다.`;
       await addDoc(collection(db, "alarm"), {
-        userId: data.userId, // 리트윗 당한 사람 uid
+        userId: data.user.id, // 리포스팅 당한 사람 uid
         content: content,
         tweetId: data.id,
         isChecked: false,
@@ -59,7 +58,7 @@ export default function ReTweetDialog({ isOpenReTweet, handleClose, ...data }) {
   return (
     <Dialog open={isOpenReTweet} onClose={handleClose}>
       <DialogTitle className="reply-dialog-title">
-        <div className="info">Re Tweet</div>
+        <div className="info">리포스팅</div>
         <div className="close-btn" onClick={handleClose}>
           <svg
             xmlns="http://www.w3.org/2000/svg"
@@ -85,7 +84,7 @@ export default function ReTweetDialog({ isOpenReTweet, handleClose, ...data }) {
             type="submit"
             className="submit-btn"
             onClick={onSubmit}
-            value={isLoading ? "Posting..." : "Re Tweet"}
+            value="리포스팅"
           ></input>
         </div>
       </div>

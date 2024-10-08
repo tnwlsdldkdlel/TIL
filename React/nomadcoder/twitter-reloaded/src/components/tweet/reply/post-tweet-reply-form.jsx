@@ -3,8 +3,7 @@ import { auth, db } from "../../../firebase";
 import "../tweet.css";
 import { addDoc, collection } from "firebase/firestore";
 
-export default function PostTweetReplyForm({ tweetId }) {
-  const [isLoading, setLoading] = useState(false);
+export default function PostTweetReplyForm({ tweetId, userId, tweet }) {
   const [input, setInput] = useState("");
   const user = auth.currentUser;
 
@@ -15,24 +14,30 @@ export default function PostTweetReplyForm({ tweetId }) {
   const onSubmit = async (e) => {
     e.preventDefault();
 
-    if (!user || isLoading || input === "") return;
+    if (!user || input === "") return;
 
     try {
-      setLoading(true);
-      await addDoc(collection(db, "replies"), {
+      const doc = await addDoc(collection(db, "replies"), {
         reply: input,
         createdAt: Date.now(),
         updatedAt: Date.now(),
-        username: user.displayName || "Anonymous",
         userId: user.uid,
         tweetId: tweetId,
+      });
+
+      const content = `${user.displayName}님이 ${tweet}글에 댓글을 달았습니다.`;
+      await addDoc(collection(db, "alarm"), {
+        userId: userId, // 조아요 당한 사람 uid
+        content: content,
+        tweetId: tweetId,
+        replyId: doc.id,
+        isChecked: false,
+        createdAt: Date.now(),
       });
 
       setInput("");
     } catch (error) {
       console.log(error);
-    } finally {
-      setLoading(false);
     }
   };
 
@@ -42,7 +47,7 @@ export default function PostTweetReplyForm({ tweetId }) {
         rows={5}
         maxLength={180}
         className="text-area"
-        placeholder="What's on your mind?"
+        placeholder="댓글을 남겨주세요!"
         name="reply"
         value={input}
         onChange={onChange}
@@ -50,7 +55,7 @@ export default function PostTweetReplyForm({ tweetId }) {
       <input
         className="submit-btn"
         type="submit"
-        value={isLoading ? "Posting..." : "Post Reply"}
+        value="댓글 달기"
         onClick={onSubmit}
       ></input>
     </form>

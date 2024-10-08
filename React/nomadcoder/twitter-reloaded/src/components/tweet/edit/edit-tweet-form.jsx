@@ -12,16 +12,10 @@ import {
 export default function EditTweetForm({ handleClose, ...data }) {
   const [isLoading, setLoading] = useState(false);
   const [input, setInput] = useState(data);
-  const [isUpdateImg, setIsUpdateImg] = useState(false);
 
   const onChange = (e) => {
     const name = e.target.name;
     let value = e.target.value;
-
-    if (name === "photo") {
-      value = e.target.files[0];
-      setIsUpdateImg(true);
-    }
 
     setInput({ ...input, [name]: value });
   };
@@ -82,13 +76,13 @@ export default function EditTweetForm({ handleClose, ...data }) {
         rows={5}
         maxLength={180}
         className="text-area"
-        placeholder="What is happening?"
+        placeholder="무슨 일이 일어나고 있나요?"
         name="tweet"
         value={input.tweet}
         onChange={onChange}
       ></textarea>
       <label className="file-btn" htmlFor="photo">
-        {isUpdateImg ? "Update photo added ✅" : "Update photo"}
+        사진 수정하기
       </label>
       <input
         className="file-input"
@@ -101,7 +95,7 @@ export default function EditTweetForm({ handleClose, ...data }) {
       <input
         className="submit-btn"
         type="submit"
-        value={isLoading ? "Posting..." : "Update Tweet"}
+        value="수정하기"
         onClick={onSubmit}
       ></input>
     </form>

@@ -16,6 +16,7 @@ export default function TweetReplyDialog({
 
   useEffect(() => {
     if (!data.id) return;
+    delete data.username;
 
     const repliesQuery = query(
       collection(db, "replies"),
@@ -31,7 +32,8 @@ export default function TweetReplyDialog({
         return {
           ...replyData,
           id: replyId,
-          like: { isLiked: false, count: 0 }, // 초기값 설정
+          like: { isLiked: false, count: 0 },
+          user: { id: replyData.userId, name: "", photo: "" }, // 초기값 설정
         };
       });
 
@@ -68,6 +70,31 @@ export default function TweetReplyDialog({
             })
           );
         });
+
+        const userQuery = query(
+          collection(db, "user"),
+          where("id", "==", reply.user.id)
+        );
+
+        onSnapshot(userQuery, (likeSnapshot) => {
+          const user = likeSnapshot.docs[0].data();
+
+          setReplies((prevReplies) =>
+            prevReplies.map((prevReply) => {
+              if (prevReply.user.id === user.id) {
+                return {
+                  ...prevReply,
+                  user: {
+                    id: user.id,
+                    name: user.name,
+                    photo: user.photo || "",
+                  },
+                };
+              }
+              return prevReply;
+            })
+          );
+        });
       });
     });
 
@@ -79,7 +106,7 @@ export default function TweetReplyDialog({
   return (
     <Dialog open={isOpenReply} onClose={handleClose}>
       <DialogTitle className="reply-dialog-title">
-        <div className="info">Content</div>
+        <div className="info">내용</div>
         <div className="close-btn" onClick={handleClose}>
           <svg
             xmlns="http://www.w3.org/2000/svg"
@@ -99,20 +126,28 @@ export default function TweetReplyDialog({
         <div style={{ flex: 1, overflowY: "auto" }}>
           <Tweet className="tweet" isReply={true} {...data}></Tweet>
           <div className="title">
-            <p>Reply</p>
+            <p>댓글</p>
           </div>
           {replies.map((reply, index) => {
             return (
               <TweetReply
                 key={reply.id}
                 isLast={index === replies.length - 1}
+                userId={data.user.id}
+                tweetId={data.id}
                 {...reply}
               />
             );
           })}
         </div>
         <div className="reply-form">
-          <PostTweetReplyForm tweetId={data.id} />
+          <PostTweetReplyForm
+            tweetId={data.id}
+            userId={data.user != undefined ? data.user.id : ""}
+            tweet={
+              data.tweet > 10 ? data.tweet.substr(0, 10) + "..." : data.tweet
+            }
+          />
         </div>
       </div>
     </Dialog>
