@@ -40,6 +40,16 @@
 
 .profile .top .count .value {
   font-weight: bolder;
+  font-size: x-large;
+}
+
+.profile .top .count .key {
+  font-size: medium;
+}
+
+.profile .top .count .follower-count,
+.profile .top .count .following-count {
+  cursor: pointer;
 }
 
 .edit .photo .avatar-upload > img,
@@ -168,6 +178,19 @@
 .profile .follow-btn {
   padding: 10px 0px;
   background-color: #1d9bf0;
+  color: white;
+  text-align: center;
+  border-radius: 10px;
+  border: unset;
+  font-size: 14px;
+  font-weight: 600;
+  cursor: pointer;
+  width: -webkit-fill-available;
+}
+
+.profile .following-btn {
+  padding: 10px 0px;
+  background-color: #808080;
   color: white;
   text-align: center;
   border-radius: 10px;

@@ -157,7 +157,7 @@ export default function ReTweet({ isReply, isLast, isRetweet, ...data }) {
   }, []);
 
   const onDelete = async () => {
-    const ok = confirm("Are you sure you want to delete this tweet?");
+    const ok = confirm("정말 글을 삭제하실건가요?");
     if (!ok) {
       setIsOpen("");
       onClickCloseMenu();

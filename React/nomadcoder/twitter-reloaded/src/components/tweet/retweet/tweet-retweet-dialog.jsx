@@ -41,6 +41,7 @@ export default function ReTweetDialog({ isOpenReTweet, handleClose, ...data }) {
       }글을 리포스팅했습니다.`;
       await addDoc(collection(db, "alarm"), {
         userId: data.user.id, // 리포스팅 당한 사람 uid
+        targetId: user.uid, // 리포스팅한 사람 uid
         content: content,
         tweetId: data.id,
         isChecked: false,

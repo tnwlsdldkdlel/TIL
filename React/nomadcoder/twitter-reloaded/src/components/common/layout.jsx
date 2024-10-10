@@ -6,6 +6,7 @@ import {
   collection,
   getDocs,
   onSnapshot,
+  orderBy,
   query,
   updateDoc,
   where,
@@ -34,7 +35,8 @@ export default function Layout() {
     const repliesQuery = query(
       collection(db, "alarm"),
       where("isChecked", "==", false),
-      where("userId", "==", user.uid)
+      where("userId", "==", user.uid),
+      orderBy("__name__", "desc")
     );
 
     onSnapshot(repliesQuery, (replySnapshot) => {
@@ -145,7 +147,8 @@ export default function Layout() {
   const getTweetReply = async (tweetId) => {
     const tweetReplyQuery = query(
       collection(db, "replies"),
-      where("tweetId", "==", tweetId)
+      where("tweetId", "==", tweetId),
+      orderBy("__name__", "desc")
     );
 
     const unsubscribeTweets = onSnapshot(tweetReplyQuery, (snapshot) => {

@@ -27,7 +27,8 @@ export default function PostTweetReplyForm({ tweetId, userId, tweet }) {
 
       const content = `${user.displayName}님이 ${tweet}글에 댓글을 달았습니다.`;
       await addDoc(collection(db, "alarm"), {
-        userId: userId, // 조아요 당한 사람 uid
+        userId: userId, // 댓글을 당한 사람 uid
+        targetId: user.uid, // 댓글을 한 사람 uid
         content: content,
         tweetId: tweetId,
         replyId: doc.id,

@@ -3,8 +3,10 @@ import { Fragment, useEffect, useState } from "react";
 import { auth, db } from "../../../firebase";
 import {
   collection,
+  getDocs,
   limit,
   onSnapshot,
+  orderBy,
   query,
   where,
 } from "firebase/firestore";
@@ -18,7 +20,8 @@ export default function AlarmDialog({ isOpen, handleClose, onClickDetail }) {
   useEffect(() => {
     const alarmQuery = query(
       collection(db, "alarm"),
-      where("userId", "==", user.uid)
+      where("userId", "==", user.uid),
+      orderBy("__name__", "desc")
     );
 
     const unsubscribeAlarms = onSnapshot(alarmQuery, (snapshot) => {
@@ -60,45 +63,61 @@ export default function AlarmDialog({ isOpen, handleClose, onClickDetail }) {
           });
         }
 
-        if (alarm.targetId) {
-          const tweetQuery = query(
-            collection(db, "relation"),
-            where("targetId", "==", user.uid)
+        // 팔로우정보
+        const followQuery = query(
+          collection(db, "follow"),
+          where("__name__", "==", alarm.followId)
+        );
+
+        onSnapshot(followQuery, async (snapshot) => {
+          const followId = snapshot.docs[0].id;
+          const followData = snapshot.docs[0].data();
+          let isFollowing = false;
+
+          // 나도 팔로우 했는지 확인
+          const followCollection = query(
+            collection(db, "follow"),
+            where("userId", "==", user.uid),
+            where("targetId", "==", alarm.targetId)
           );
 
-          onSnapshot(tweetQuery, (snapshot) => {
-            const relationId = snapshot.docs[0].id;
-            const relationData = snapshot.docs[0].data();
+          const followSnap = await getDocs(followCollection);
+          let followingId = "";
 
-            if (relationData.targetId === user.uid) {
-              setAlarms((prev) => {
-                return prev.map((item) => {
-                  if (item.id === alarm.id) {
-                    return {
-                      ...item,
-                      relation: {
-                        id: relationId,
-                        isFollowing: relationData.isFollowing,
-                      },
-                    };
-                  }
+          if (followSnap.docs.length !== 0) {
+            isFollowing = true;
+            followingId = followSnap.docs[0].id;
+          }
 
-                  return item;
-                });
+          if (followData.targetId === user.uid) {
+            setAlarms((prev) => {
+              return prev.map((item) => {
+                if (item.id === alarm.id) {
+                  return {
+                    ...item,
+                    follow: {
+                      id: followId,
+                      followingId: followingId,
+                      isFollowing: isFollowing,
+                    },
+                  };
+                }
+
+                return item;
               });
-            }
-          });
-        }
+            });
+          }
+        });
 
         const userQuery = query(
           collection(db, "user"),
-          where("id", "==", alarm.userId)
+          where("id", "==", alarm.targetId)
         );
 
         onSnapshot(userQuery, (snapshot) => {
           const userData = snapshot.docs[0].data();
 
-          if (userData.id === alarm.userId) {
+          if (userData.id === alarm.targetId) {
             const photo = userData.photo;
 
             setAlarms((prev) => {
@@ -121,7 +140,7 @@ export default function AlarmDialog({ isOpen, handleClose, onClickDetail }) {
     return () => {
       unsubscribeAlarms();
     };
-  }, []);
+  }, [user.uid]);
 
   return (
     <Fragment>
@@ -150,11 +169,7 @@ export default function AlarmDialog({ isOpen, handleClose, onClickDetail }) {
             return alarm.tweetId ? (
               <Alarm key={alarm.id} onClickDetail={onClickDetail} {...alarm} />
             ) : (
-              <FollowAlarm
-                key={alarm.id}
-                onClickDetail={onClickDetail}
-                {...alarm}
-              ></FollowAlarm>
+              <FollowAlarm key={alarm.id} {...alarm}></FollowAlarm>
             );
           })}
         </DialogContent>

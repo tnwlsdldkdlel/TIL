@@ -10,6 +10,7 @@ import CreateAccount from "./pages/create-account";
 import "./App.css";
 import ProtectedRoute from "./components/common/protected-route";
 import ProfileEdit from "./components/profile/Edit";
+import Follower from "./components/follow/follower";
 
 const router = createBrowserRouter([
   {
@@ -24,6 +25,7 @@ const router = createBrowserRouter([
       { path: "profile/:userId", element: <Profile /> },
       { path: "profile", element: <Profile /> },
       { path: "profile/edit", element: <ProfileEdit /> },
+      { path: "profile/follower", element: <Follower></Follower> },
     ],
   },
   {

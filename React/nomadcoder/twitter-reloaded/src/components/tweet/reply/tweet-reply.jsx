@@ -87,6 +87,7 @@ export default function TweetReply({ isLast, userId, tweetId, ...reply }) {
       const content = `${user.displayName}님이 ${reply.reply}댓글을 좋아합니다.`;
       await addDoc(collection(db, "alarm"), {
         userId: userId, // 조아요 당한 사람 uid
+        targetId: user.uid, // 조아요 한 사람 uid
         content: content,
         tweetId: tweetId,
         likeId: doc.id,

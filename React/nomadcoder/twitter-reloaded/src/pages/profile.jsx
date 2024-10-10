@@ -18,11 +18,10 @@ export default function Profile() {
   const { userId } = useParams();
   const [info, setInfo] = useState({});
   const [tweet, setTweet] = useState([]);
-  const [count, setCount] = useState({
-    tweet: 0,
-    follower: 0,
-    following: 0,
-  });
+  const [tweetCount, setTweetCount] = useState(0);
+  const [followingCount, setFollowingCount] = useState(0);
+  const [followerCount, setFollwerCount] = useState(0);
+  const [isFollow, setIsFollow] = useState(false);
 
   useEffect(() => {
     let uid = "";
@@ -39,7 +38,7 @@ export default function Profile() {
     );
 
     const unsubscribe = onSnapshot(tweetsQuery, (snapshot) => {
-      setCount({ ...count, tweet: snapshot.docs.length });
+      setTweetCount(snapshot.docs.length);
 
       const tweetsData = snapshot.docs.map((doc) => {
         const tweetData = doc.data();
@@ -159,6 +158,39 @@ export default function Profile() {
         });
       });
 
+      // 팔로워 : 나`를` 팔로우하는 사람들 => 내가 targetId
+      // 팔로잉 : 내`가` 팔로우한 사람들 => 내가 userId
+      const followerQuery = query(
+        collection(db, "follow"),
+        where("targetId", "==", uid)
+      );
+
+      onSnapshot(followerQuery, (snapshot) => {
+        setFollwerCount(snapshot.docs.length);
+      });
+
+      const followingQuery = query(
+        collection(db, "follow"),
+        where("userId", "==", uid)
+      );
+
+      onSnapshot(followingQuery, (snapshot) => {
+        setFollowingCount(snapshot.docs.length);
+      });
+
+      // `내가` 상대방을 팔로우했는지
+      if (uid === userId) {
+        const followQuery = query(
+          collection(db, "follow"),
+          where("userId", "==", user.uid),
+          where("targetId", "==", uid)
+        );
+
+        onSnapshot(followQuery, (snapshot) => {
+          setIsFollow(snapshot.docs.length > 0);
+        });
+      }
+
       setTweet(tweetsData);
     });
 
@@ -199,20 +231,20 @@ export default function Profile() {
     navigate(`/profile/edit`);
   };
 
-  const onClickFollow = () => {
-    addDoc(collection(db, "relation"), {
+  const onClickFollow = async () => {
+    const doc = await addDoc(collection(db, "follow"), {
       userId: user.uid, // 팔로우 건 사람
       targetId: userId, // 팔로우 당한 사람
-      isFollowing: false,
       createdAt: Date.now(),
       updatedAt: Date.now(),
     });
 
     const content = `${user.displayName}님이 팔로우하기 시작했습니다.`;
-    addDoc(collection(db, "alarm"), {
+    await addDoc(collection(db, "alarm"), {
       userId: userId, // 팔로우 당한 사람 uid
-      content: content,
       targetId: user.uid, // 팔로우한 사람
+      followId: doc.id,
+      content: content,
       isChecked: false,
       createdAt: Date.now(),
     });
@@ -245,15 +277,15 @@ export default function Profile() {
         </label>
         <div className="count">
           <div className="tweet-count">
-            <div className="value">{count.tweet}</div>
+            <div className="value">{tweetCount}</div>
             <div className="key">게시물</div>
           </div>
-          <div className="follower-count">
-            <div className="value">120</div>
+          <div className="follower-count" onClick={() => navigate("follower")}>
+            <div className="value">{followerCount}</div>
             <div className="key">팔로워</div>
           </div>
           <div className="following-count">
-            <div className="value">97</div>
+            <div className="value">{followingCount}</div>
             <div className="key">팔로잉</div>
           </div>
         </div>
@@ -265,6 +297,10 @@ export default function Profile() {
       {!userId || userId === user.uid ? (
         <button className="edit-btn" onClick={onClickProfile}>
           프로필편집
+        </button>
+      ) : isFollow ? (
+        <button className="following-btn" onClick={onClickFollow}>
+          팔로잉
         </button>
       ) : (
         <button className="follow-btn" onClick={onClickFollow}>

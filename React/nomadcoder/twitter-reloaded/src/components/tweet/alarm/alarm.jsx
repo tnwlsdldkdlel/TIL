@@ -6,7 +6,7 @@ export default function Alarm({ onClickDetail, ...data }) {
     <div className={`alarm_${data.tweetId}`} onClick={onClickDetail}>
       <div className="left">
         {data.user && data.user.photo ? (
-          <img src={data.user.photo} width={50} height={50} />
+          <img src={data.user.photo} />
         ) : (
           <>
             <svg

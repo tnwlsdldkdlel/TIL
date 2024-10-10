@@ -133,6 +133,7 @@ export default function Tweet({ isReply, isLast, isRetweet, ...data }) {
       }글을 좋아합니다.`;
       await addDoc(collection(db, "alarm"), {
         userId: data.user.id, // 조아요 당한 사람 uid
+        targetId: user.uid, // 조아요 한 사람 uid
         content: content,
         tweetId: data.id,
         likeId: doc.id,

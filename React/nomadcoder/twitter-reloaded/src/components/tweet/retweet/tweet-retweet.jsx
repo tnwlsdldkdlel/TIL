@@ -81,6 +81,7 @@ export default function TweetReply({ isLast, ...reply }) {
       }댓글을 좋아합니다.`;
       await addDoc(collection(db, "alarm"), {
         userId: reply.userId, // 조아요 당한 사람 uid
+        targetId: user.uid, // 댓글을 조아요한 사람 uid
         content: content,
         replyId: reply.id,
         isChecked: false,
