@@ -25,7 +25,7 @@
   overflow: hidden;
   height: 30px;
   border-radius: 50%;
-  background-color: #1d9bf0;
+  background-color: gray;
   display: flex;
   margin-bottom: unset !important;
 }
@@ -41,6 +41,11 @@
   width: 100%;
   gap: 10px;
   cursor: pointer;
+}
+
+.tweet .right {
+  display: flex;
+  align-items: center;
 }
 
 .tweet .right .menu .btn {
@@ -80,7 +85,7 @@
   border-radius: 20px !important;
   resize: none;
   width: -webkit-fill-available;
-  height: -webkit-fill-available;
+  height: fit-content;
 }
 
 .dialog-title {
@@ -152,7 +157,7 @@
 }
 
 .retweet-dialog-content .submit-btn {
-  background-color: #1d9bf0;
+  background-color: #5fb404;
   color: white;
   border: none;
   padding: 10px 0px;

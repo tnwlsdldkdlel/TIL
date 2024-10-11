@@ -81,7 +81,7 @@ export default function FollowAlarm({ ...data }) {
             </svg>
           </>
         )}
-        <div>{data.content}</div>
+        <div style={{ width: "60%" }}>{data.content}</div>
         <div className="time">{timeAgo(data.createdAt)}</div>
       </div>
       <div className="right2">
@@ -91,7 +91,7 @@ export default function FollowAlarm({ ...data }) {
           </div>
         ) : (
           <div className="mutual-follow-btn" onClick={onClickFollow}>
-            맞팔로우
+            팔로우
           </div>
         )}
       </div>

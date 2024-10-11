@@ -17,7 +17,7 @@ body {
 
 :root {
   --scrollbar-width: 10px;
-  --scrollbar-thumb-color: #1d9bf0;
+  --scrollbar-thumb-color: white;
   --scrollbar-track-color: none;
 }
 

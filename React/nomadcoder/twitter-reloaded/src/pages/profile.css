@@ -12,7 +12,7 @@
   overflow: hidden;
   height: 80px;
   border-radius: 50%;
-  background-color: #1d9bf0;
+  background-color: gray;
   cursor: pointer;
   display: flex;
   justify-content: center;
@@ -82,7 +82,7 @@
 
 .profile .edit-btn {
   padding: 10px 0px;
-  background-color: #808080;
+  background-color: #5fb404;
   color: white;
   text-align: center;
   border-radius: 10px;
@@ -98,7 +98,7 @@
 }
 
 .edit .photo .profile-label {
-  color: #1d9bf0;
+  color: #5fb404;
   font-weight: 600;
   cursor: pointer;
   margin-top: 20px;
@@ -129,7 +129,7 @@
   border: none;
   border-bottom: 1px solid white;
   background-color: black;
-  border-radius: 2px;
+  border-radius: 1px;
   width: 100%;
   color: white;
   &:focus {
@@ -144,11 +144,11 @@
 
 .btn .edit-btn {
   padding: 10px 0px;
-  background-color: #1d9bf0;
+  background-color: #5fb404;
   color: white;
   text-align: center;
   border-radius: 10px;
-  border: 1px solid #1d9bf0;
+  border: 1px solid #5fb404;
   font-size: 14px;
   font-weight: 600;
   cursor: pointer;
@@ -157,10 +157,10 @@
 
 .btn .cancel-btn {
   padding: 10px 0px;
-  color: #1d9bf0;
+  color: #5fb404;
   text-align: center;
   border-radius: 10px;
-  border: 1px solid #1d9bf0;
+  border: 1px solid #5fb404;
   background-color: black;
   font-size: 14px;
   font-weight: 600;
@@ -177,7 +177,7 @@
 
 .profile .follow-btn {
   padding: 10px 0px;
-  background-color: #1d9bf0;
+  background-color: #5fb404;
   color: white;
   text-align: center;
   border-radius: 10px;

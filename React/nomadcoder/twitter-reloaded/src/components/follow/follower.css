@@ -12,9 +12,9 @@
   color: #808080;
   cursor: pointer;
   &.active {
-    color: #1d9bf0;
+    color: white;
     font-weight: bolder;
-    border-bottom: 1px solid #1d9bf0;
+    border-bottom: 1px solid white;
   }
 }
 
@@ -59,4 +59,126 @@
   width: 20px;
   height: 20px;
   cursor: pointer;
+}
+
+.follow-list {
+  margin-top: 30px;
+}
+
+.follow-item {
+  display: flex;
+  flex-direction: row;
+  justify-content: space-between;
+}
+
+.follow-item .left {
+  display: flex;
+  flex-direction: row;
+  gap: 10px;
+  cursor: pointer;
+}
+
+.follow-item .left .photo,
+.follow-item .left > svg {
+  border-radius: 50%;
+  width: 40px;
+  height: 40px;
+}
+
+.follow-item .left > svg {
+  background-color: gray;
+}
+
+.follow-item .left .name {
+  display: flex;
+  align-items: center;
+}
+
+.follow-item .right {
+  display: flex;
+  align-items: center;
+}
+
+.follow-item .right .follow-btn {
+  padding: 6px 0px;
+  background-color: #5fb404;
+  color: white;
+  text-align: center;
+  border-radius: 10px;
+  border: unset;
+  font-size: 13px;
+  font-weight: 600;
+  cursor: pointer;
+  width: 150px;
+}
+
+.follow-item .right .menu .btn {
+  width: 20px;
+  color: white;
+  padding: unset;
+}
+
+.follow-remove-dialog .content {
+  margin: 10px;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 15px;
+}
+
+.follow-remove-dialog .content > img,
+.follow-remove-dialog .content > svg {
+  border-radius: 50%;
+  width: 100px;
+  height: 100px;
+}
+
+.follow-remove-dialog .content > svg {
+  background-color: gray;
+}
+
+.follow-remove-dialog .dialog-title {
+  display: flex;
+  justify-content: right;
+}
+
+.follow-remove-dialog .btn {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+  padding: 10px;
+}
+
+.follow-remove-dialog .btn > button {
+  border-radius: 8px;
+  color: white;
+  padding: 10px 0px;
+  width: 100%;
+  font-size: small;
+}
+
+.follow-remove-dialog .btn .remove {
+  border: 2px solid #5fb404;
+  background-color: #5fb404;
+}
+
+.follow-remove-dialog .btn .cancel {
+  border: 2px solid #2f2f2f;
+  background-color: #2f2f2f;
+}
+
+body
+  > div.MuiDialog-root.follow-remove-dialog.MuiModal-root.css-1424xw8-MuiModal-root-MuiDialog-root
+  > div.MuiDialog-container.MuiDialog-scrollPaper.css-19do60a-MuiDialog-container
+  > div {
+  height: unset;
+  width: 20%;
+}
+
+.follower .content .empty {
+  margin: 25%;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 15px;
 }

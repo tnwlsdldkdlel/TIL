@@ -246,7 +246,7 @@ export default function ReTweet({ isReply, isLast, isRetweet, ...data }) {
 
   const onClickUser = (e) => {
     e.stopPropagation();
-    navigate(`/profile/${data.user.id}`);
+    navigate(`/profile`, { state: { userId: data.user.id } });
   };
 
   return (

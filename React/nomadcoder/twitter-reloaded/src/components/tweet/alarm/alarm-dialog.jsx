@@ -70,42 +70,44 @@ export default function AlarmDialog({ isOpen, handleClose, onClickDetail }) {
         );
 
         onSnapshot(followQuery, async (snapshot) => {
-          const followId = snapshot.docs[0].id;
-          const followData = snapshot.docs[0].data();
-          let isFollowing = false;
+          if (snapshot.docs.length > 0) {
+            const followId = snapshot.docs[0].id;
+            const followData = snapshot.docs[0].data();
+            let isFollowing = false;
 
-          // 나도 팔로우 했는지 확인
-          const followCollection = query(
-            collection(db, "follow"),
-            where("userId", "==", user.uid),
-            where("targetId", "==", alarm.targetId)
-          );
+            // 나도 팔로우 했는지 확인
+            const followCollection = query(
+              collection(db, "follow"),
+              where("userId", "==", user.uid),
+              where("targetId", "==", alarm.targetId)
+            );
 
-          const followSnap = await getDocs(followCollection);
-          let followingId = "";
+            const followSnap = await getDocs(followCollection);
+            let followingId = "";
 
-          if (followSnap.docs.length !== 0) {
-            isFollowing = true;
-            followingId = followSnap.docs[0].id;
-          }
+            if (followSnap.docs.length !== 0) {
+              isFollowing = true;
+              followingId = followSnap.docs[0].id;
+            }
 
-          if (followData.targetId === user.uid) {
-            setAlarms((prev) => {
-              return prev.map((item) => {
-                if (item.id === alarm.id) {
-                  return {
-                    ...item,
-                    follow: {
-                      id: followId,
-                      followingId: followingId,
-                      isFollowing: isFollowing,
-                    },
-                  };
-                }
+            if (followData.targetId === user.uid) {
+              setAlarms((prev) => {
+                return prev.map((item) => {
+                  if (item.id === alarm.id) {
+                    return {
+                      ...item,
+                      follow: {
+                        id: followId,
+                        followingId: followingId,
+                        isFollowing: isFollowing,
+                      },
+                    };
+                  }
 
-                return item;
+                  return item;
+                });
               });
-            });
+            }
           }
         });
 

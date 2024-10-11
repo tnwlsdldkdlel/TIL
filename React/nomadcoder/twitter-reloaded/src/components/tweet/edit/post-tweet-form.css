@@ -20,16 +20,15 @@
   }
   &:focus {
     outline: none;
-    border-color: #1d9bf0;
   }
 }
 
 .post-tweet-form .file-btn {
   padding: 10px 0px;
-  color: #1d9bf0;
+  color: #5fb404;
   text-align: center;
   border-radius: 20px;
-  border: 1px solid #1d9bf0;
+  border: 1px solid #5fb404;
   font-size: 14px;
   font-weight: 600;
   cursor: pointer;
@@ -41,7 +40,7 @@
 
 .post-tweet-form .submit-btn {
   margin-bottom: 10px;
-  background-color: #1d9bf0;
+  background-color: #5fb404;
   color: white;
   border: none;
   padding: 10px 0px;

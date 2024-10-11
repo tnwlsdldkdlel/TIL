@@ -30,7 +30,7 @@
   &[type="submit"] {
     margin-top: 30px;
     cursor: pointer;
-    background-color: #1d9bf0;
+    background-color: #5fb404;
     color: white;
     font-weight: 600;
     &:hover {
@@ -47,6 +47,6 @@
 .create-account .link-text {
   margin-top: 20px;
   a {
-    color: #1d9bf0;
+    color: #5fb404;
   }
 }

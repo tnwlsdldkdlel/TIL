@@ -10,12 +10,13 @@ import {
 } from "firebase/firestore";
 import Tweet from "../components/tweet/tweet";
 import ReTweet from "../components/tweet/re-tweet";
-import { useNavigate, useParams } from "react-router-dom";
+import { useLocation, useNavigate } from "react-router-dom";
 
 export default function Profile() {
   const user = auth.currentUser;
   const navigate = useNavigate();
-  const { userId } = useParams();
+  const location = useLocation();
+  const { userId } = location.state || {};
   const [info, setInfo] = useState({});
   const [tweet, setTweet] = useState([]);
   const [tweetCount, setTweetCount] = useState(0);
@@ -25,7 +26,6 @@ export default function Profile() {
 
   useEffect(() => {
     let uid = "";
-
     if (userId && userId !== user.uid) {
       uid = userId;
     } else {
@@ -280,11 +280,30 @@ export default function Profile() {
             <div className="value">{tweetCount}</div>
             <div className="key">게시물</div>
           </div>
-          <div className="follower-count" onClick={() => navigate("follower")}>
+          <div
+            className="follower-count"
+            onClick={() =>
+              navigate("follower", {
+                state: {
+                  userId: userId && userId !== user.uid ? userId : user.uid,
+                },
+              })
+            }
+          >
             <div className="value">{followerCount}</div>
             <div className="key">팔로워</div>
           </div>
-          <div className="following-count">
+          <div
+            className="following-count"
+            onClick={() =>
+              navigate("follower", {
+                state: {
+                  stateTab: "following",
+                  userId: userId && userId !== user.uid ? userId : user.uid,
+                },
+              })
+            }
+          >
             <div className="value">{followingCount}</div>
             <div className="key">팔로잉</div>
           </div>

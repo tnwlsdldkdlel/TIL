@@ -26,7 +26,7 @@ export default function Alarm({ onClickDetail, ...data }) {
           </>
         )}
 
-        <div>{data.content}</div>
+        <div style={{ width: "60%" }}>{data.content}</div>
         <div className="time">{timeAgo(data.createdAt)}</div>
       </div>
       <div className="right">
