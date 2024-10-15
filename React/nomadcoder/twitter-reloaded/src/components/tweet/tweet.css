@@ -59,10 +59,7 @@
   font-size: 18px;
 }
 
-.tweet .middle .photo {
-  display: flex;
-  width: 100%;
-  justify-content: center;
+.tweet .middle .image {
   margin-bottom: 20px;
 }
 
@@ -78,7 +75,7 @@
   gap: 10px;
 }
 
-.css-10d30g3-MuiPaper-root-MuiDialog-paper {
+.MuiPaper-root-MuiDialog-paper {
   border: 1px solid white;
   background-color: black !important;
   color: white !important;

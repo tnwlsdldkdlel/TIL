@@ -5,6 +5,7 @@ import {
   addDoc,
   collection,
   onSnapshot,
+  orderBy,
   query,
   where,
 } from "firebase/firestore";
@@ -34,7 +35,8 @@ export default function Profile() {
 
     const tweetsQuery = query(
       collection(db, "tweets"),
-      where("userId", "==", uid)
+      where("userId", "==", uid),
+      orderBy("__name__", "desc")
     );
 
     const unsubscribe = onSnapshot(tweetsQuery, (snapshot) => {
@@ -51,11 +53,38 @@ export default function Profile() {
           reply: { count: 0 },
           retweet: { count: 0 },
           user: { id: tweetData.userId, name: "", photo: "" },
+          image: [],
         };
       });
 
       tweetsData.forEach((item) => {
         delete tweet.userId;
+
+        const imagesQuery = query(
+          collection(db, "images"),
+          where("tweetId", "==", item.id),
+          orderBy("__name__", "asc")
+        );
+
+        onSnapshot(imagesQuery, (snapshot) => {
+          const imageArr = [];
+
+          snapshot.docs.forEach((doc) => {
+            imageArr.push(doc.data().url);
+          });
+
+          setTweet((prevTweets) => {
+            return prevTweets.map((prevTweet) => {
+              if (prevTweet.id === item.id) {
+                return {
+                  ...prevTweet,
+                  images: imageArr,
+                };
+              }
+              return prevTweet;
+            });
+          });
+        });
 
         const userQuery = query(
           collection(db, "user"),
@@ -249,6 +278,8 @@ export default function Profile() {
       createdAt: Date.now(),
     });
   };
+
+  console.log(tweet);
 
   return (
     <div className="profile">

@@ -30,8 +30,8 @@ export default function Alarm({ onClickDetail, ...data }) {
         <div className="time">{timeAgo(data.createdAt)}</div>
       </div>
       <div className="right">
-        {data.photo ? (
-          <img src={data.photo} width={50} height={50} />
+        {data.images ? (
+          <img src={data.images} width={50} height={50} />
         ) : (
           <div className="no_img"></div>
         )}

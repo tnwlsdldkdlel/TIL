@@ -11,6 +11,7 @@ import "./App.css";
 import ProtectedRoute from "./components/common/protected-route";
 import ProfileEdit from "./components/profile/Edit";
 import Follower from "./components/follow/follower";
+import Post from "./pages/post";
 
 const router = createBrowserRouter([
   {
@@ -22,10 +23,10 @@ const router = createBrowserRouter([
     ),
     children: [
       { path: "", element: <Home /> },
-      { path: "profile/:userId", element: <Profile /> },
       { path: "profile", element: <Profile /> },
       { path: "profile/edit", element: <ProfileEdit /> },
       { path: "profile/follower", element: <Follower></Follower> },
+      { path: "post", element: <Post></Post> },
     ],
   },
   {

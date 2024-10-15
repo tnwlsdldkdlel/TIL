@@ -45,14 +45,117 @@ export default function AlarmDialog({ isOpen, handleClose, onClickDetail }) {
           onSnapshot(tweetQuery, (snapshot) => {
             const tweetId = snapshot.docs[0].id;
             if (tweetId === alarm.tweetId) {
-              const photo = snapshot.docs[0].data().photo;
+              setAlarms((prev) => {
+                return prev.map((item) => {
+                  if (item.id === alarm.id) {
+                    return {
+                      ...item,
+                      images: "",
+                    };
+                  }
+
+                  return item;
+                });
+              });
+            }
+          });
+
+          const imagesQuery = query(
+            collection(db, "images"),
+            where("tweetId", "==", alarm.tweetId),
+            orderBy("__name__", "asc"),
+            limit(1)
+          );
+
+          onSnapshot(imagesQuery, (snapshot) => {
+            if (snapshot.docs[0]) {
+              const tweetId = snapshot.docs[0].data().tweetId;
+              if (tweetId === alarm.tweetId) {
+                setAlarms((prev) => {
+                  return prev.map((item) => {
+                    if (item.id === alarm.id) {
+                      return {
+                        ...item,
+                        images: snapshot.docs[0].data().url,
+                      };
+                    }
+
+                    return item;
+                  });
+                });
+              }
+            }
+          });
+        }
+
+        // 팔로우정보
+        if (alarm.followId) {
+          const followQuery = query(
+            collection(db, "follow"),
+            where("__name__", "==", alarm.followId)
+          );
+
+          onSnapshot(followQuery, async (snapshot) => {
+            if (snapshot.docs.length > 0) {
+              const followId = snapshot.docs[0].id;
+              const followData = snapshot.docs[0].data();
+              let isFollowing = false;
+
+              // 나도 팔로우 했는지 확인
+              const followCollection = query(
+                collection(db, "follow"),
+                where("userId", "==", user.uid),
+                where("targetId", "==", alarm.targetId)
+              );
+
+              const followSnap = await getDocs(followCollection);
+              let followingId = "";
+
+              if (followSnap.docs.length !== 0) {
+                isFollowing = true;
+                followingId = followSnap.docs[0].id;
+              }
+
+              if (followData.targetId === user.uid) {
+                setAlarms((prev) => {
+                  return prev.map((item) => {
+                    if (item.id === alarm.id) {
+                      return {
+                        ...item,
+                        follow: {
+                          id: followId,
+                          followingId: followingId,
+                          isFollowing: isFollowing,
+                        },
+                      };
+                    }
+
+                    return item;
+                  });
+                });
+              }
+            }
+          });
+        }
+
+        if (alarm.targetId) {
+          const userQuery = query(
+            collection(db, "user"),
+            where("id", "==", alarm.targetId)
+          );
+
+          onSnapshot(userQuery, (snapshot) => {
+            const userData = snapshot.docs[0].data();
+
+            if (userData.id === alarm.targetId) {
+              const photo = userData.photo;
 
               setAlarms((prev) => {
                 return prev.map((item) => {
                   if (item.id === alarm.id) {
                     return {
                       ...item,
-                      photo: photo,
+                      user: { photo: photo },
                     };
                   }
 
@@ -62,80 +165,6 @@ export default function AlarmDialog({ isOpen, handleClose, onClickDetail }) {
             }
           });
         }
-
-        // 팔로우정보
-        const followQuery = query(
-          collection(db, "follow"),
-          where("__name__", "==", alarm.followId)
-        );
-
-        onSnapshot(followQuery, async (snapshot) => {
-          if (snapshot.docs.length > 0) {
-            const followId = snapshot.docs[0].id;
-            const followData = snapshot.docs[0].data();
-            let isFollowing = false;
-
-            // 나도 팔로우 했는지 확인
-            const followCollection = query(
-              collection(db, "follow"),
-              where("userId", "==", user.uid),
-              where("targetId", "==", alarm.targetId)
-            );
-
-            const followSnap = await getDocs(followCollection);
-            let followingId = "";
-
-            if (followSnap.docs.length !== 0) {
-              isFollowing = true;
-              followingId = followSnap.docs[0].id;
-            }
-
-            if (followData.targetId === user.uid) {
-              setAlarms((prev) => {
-                return prev.map((item) => {
-                  if (item.id === alarm.id) {
-                    return {
-                      ...item,
-                      follow: {
-                        id: followId,
-                        followingId: followingId,
-                        isFollowing: isFollowing,
-                      },
-                    };
-                  }
-
-                  return item;
-                });
-              });
-            }
-          }
-        });
-
-        const userQuery = query(
-          collection(db, "user"),
-          where("id", "==", alarm.targetId)
-        );
-
-        onSnapshot(userQuery, (snapshot) => {
-          const userData = snapshot.docs[0].data();
-
-          if (userData.id === alarm.targetId) {
-            const photo = userData.photo;
-
-            setAlarms((prev) => {
-              return prev.map((item) => {
-                if (item.id === alarm.id) {
-                  return {
-                    ...item,
-                    user: { photo: photo },
-                  };
-                }
-
-                return item;
-              });
-            });
-          }
-        });
       });
     });
 
@@ -146,7 +175,23 @@ export default function AlarmDialog({ isOpen, handleClose, onClickDetail }) {
 
   return (
     <Fragment>
-      <Dialog className="edit-dialog" open={isOpen} onClose={handleClose}>
+      <Dialog
+        className="edit-dialog"
+        open={isOpen}
+        onClose={handleClose}
+        PaperProps={{
+          sx: {
+            backgroundColor: "black",
+            border: "1px solid white",
+            borderRadius: "20px",
+            resize: "none",
+            width: "fit-content",
+            height: "fit-content",
+            color: "white",
+            maxWidth: "fit-content",
+          },
+        }}
+      >
         <DialogTitle className="dialog-title">
           알림
           <div className="close-btn" onClick={handleClose}>

@@ -104,7 +104,22 @@ export default function TweetReplyDialog({
   }, [data.id]);
 
   return (
-    <Dialog open={isOpenReply} onClose={handleClose}>
+    <Dialog
+      open={isOpenReply}
+      onClose={handleClose}
+      PaperProps={{
+        sx: {
+          backgroundColor: "black",
+          border: "1px solid white",
+          borderRadius: "20px",
+          resize: "none",
+          width: "fit-content",
+          height: "fit-content",
+          color: "white",
+          maxWidth: "fit-content",
+        },
+      }}
+    >
       <DialogTitle className="reply-dialog-title">
         <div className="info">내용</div>
         <div className="close-btn" onClick={handleClose}>
@@ -123,7 +138,7 @@ export default function TweetReplyDialog({
         </div>
       </DialogTitle>
       <div className="reply-dialog-content scrollable">
-        <div style={{ flex: 1, overflowY: "auto" }}>
+        <div style={{ flex: 1, overflowY: "unset" }}>
           <Tweet className="tweet" isReply={true} {...data}></Tweet>
           <div className="title">
             <p>댓글</p>

@@ -18,6 +18,7 @@ import { timeAgo } from "../../common/time-ago";
 import TweetReplyDialog from "./reply/tweet-reply-dialog";
 import ReTweetDialog from "./retweet/tweet-retweet-dialog";
 import { useNavigate } from "react-router-dom";
+import ImageSlider from "../common/image-slider";
 
 export default function Tweet({ isReply, isLast, isRetweet, ...data }) {
   const [isOpen, setIsOpen] = useState("");
@@ -52,14 +53,29 @@ export default function Tweet({ isReply, isLast, isRetweet, ...data }) {
         where("tweetId", "==", data.id)
       );
 
+      const imagesQuery = query(
+        collection(db, "images"),
+        where("tweetId", "==", data.id)
+      );
+
       // tweets
       await deleteDoc(doc(db, "tweets", data.id));
 
-      // photo
-      if (data.photo) {
-        const photoRef = ref(storage, `tweets/${user.uid}/${data.id}`);
-        await deleteObject(photoRef);
+      // images storage
+      if (data.images) {
+        data.images.forEach(async (image) => {
+          // storage 삭제
+          const path = decodeURIComponent(image.split("/o/")[1].split("?")[0]);
+          const photoRef = ref(storage, path);
+          await deleteObject(photoRef);
+        });
       }
+
+      // images
+      const imagesSnapshot = await getDocs(imagesQuery);
+      imagesSnapshot.forEach(async (item) => {
+        await deleteDoc(doc(db, "images", item.id));
+      });
 
       // reply
       const replySnapshot = await getDocs(replyQuery);
@@ -85,6 +101,7 @@ export default function Tweet({ isReply, isLast, isRetweet, ...data }) {
 
   const handleClose = () => {
     setIsOpen("");
+    setAnchorEl(null);
     setIsOpenReply(false);
     setIsOpenReTweet(false);
   };
@@ -167,7 +184,6 @@ export default function Tweet({ isReply, isLast, isRetweet, ...data }) {
           borderRadius: isRetweet ? "12px" : "",
           cursor: isReply ? "" : "pointer",
         }}
-        onClick={isReply ? "" : onClickRelpyDialog}
       >
         <div className="top">
           <div className="left" onClick={onClickUser}>
@@ -200,7 +216,7 @@ export default function Tweet({ isReply, isLast, isRetweet, ...data }) {
             <></>
           ) : (
             <div className="right">
-              {data.user.name === user.displayName ? (
+              {data.user != undefined && data.user.name === user.displayName ? (
                 <div className="menu" onClick={onClickMenu}>
                   <IconButton
                     className="btn"
@@ -267,18 +283,20 @@ export default function Tweet({ isReply, isLast, isRetweet, ...data }) {
           )}
         </div>
         <div className="middle">
-          <p className="payload">{data.tweet}</p>
-          {data.photo ? (
-            <img className="photo" src={data.photo} />
-          ) : (
-            <div></div>
-          )}
+          <p className="payload" onClick={isReply ? "" : onClickRelpyDialog}>
+            {data.tweet}
+          </p>
+          {data.images && data.images.length > 0 ? (
+            <div className="image">
+              <ImageSlider images={data.images}></ImageSlider>
+            </div>
+          ) : null}
         </div>
         {isRetweet ? (
           <></>
         ) : (
           <div className="bottom">
-            {data.like.isLiked ? (
+            {data.like && data.like.isLiked ? (
               <div
                 className="like-btn"
                 onClick={isRetweet ? undefined : onClickLike}
@@ -315,7 +333,7 @@ export default function Tweet({ isReply, isLast, isRetweet, ...data }) {
                 </svg>
               </div>
             )}
-            {data.like.count}
+            {data.like && data.like.count}
             <div
               className="reply-btn"
               style={{ cursor: isRetweet ? "auto" : "pointer" }}
@@ -335,7 +353,7 @@ export default function Tweet({ isReply, isLast, isRetweet, ...data }) {
                 />
               </svg>
             </div>
-            {data.reply.count}
+            {data.reply && data.reply.count}
             <div
               className="re-tweet-btn"
               onClick={isRetweet ? undefined : onClickReTweetDialog}
@@ -356,7 +374,7 @@ export default function Tweet({ isReply, isLast, isRetweet, ...data }) {
                 />
               </svg>
             </div>
-            {data.retweet.count}
+            {data.retweet && data.retweet.count}
           </div>
         )}
       </div>

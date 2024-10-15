@@ -8,7 +8,23 @@ import { Fragment } from "react";
 export default function EditTweetDialog({ isOpen, handleClose, ...data }) {
   return (
     <Fragment>
-      <Dialog className="edit-dialog" open={isOpen} onClose={handleClose}>
+      <Dialog
+        className="edit-dialog"
+        open={isOpen}
+        onClose={handleClose}
+        PaperProps={{
+          sx: {
+            backgroundColor: "black",
+            border: "1px solid white",
+            borderRadius: "20px",
+            resize: "none",
+            width: "fit-content",
+            height: "fit-content",
+            color: "white",
+            maxWidth: "fit-content",
+          },
+        }}
+      >
         <DialogTitle className="dialog-title">
           Edit
           <div className="close-btn" onClick={handleClose}>

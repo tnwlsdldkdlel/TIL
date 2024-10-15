@@ -1,23 +1,61 @@
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import "../edit/post-tweet-form.css";
 import { auth, db, storage } from "../../../firebase";
-import { doc, updateDoc } from "firebase/firestore";
+import {
+  addDoc,
+  collection,
+  deleteDoc,
+  doc,
+  getDocs,
+  query,
+  updateDoc,
+  where,
+} from "firebase/firestore";
 import {
   deleteObject,
   getDownloadURL,
   ref,
   uploadBytes,
 } from "firebase/storage";
+import ImageSlider from "../../common/image-slider";
+import PostTweetForm from "./post-tweet-form";
+import SnackBar from "../../common/snack-bar";
+import BackDrop from "../../common/loading";
+import { v4 as uuidv4 } from "uuid";
 
 export default function EditTweetForm({ handleClose, ...data }) {
   const [isLoading, setLoading] = useState(false);
   const [input, setInput] = useState(data);
+  const [images, setImages] = useState(data.images);
+  const [removeImgages, setRemoveImages] = useState([]);
+  const [addImages, setAddImages] = useState([]);
+  const [message, setMessage] = useState("");
+  const [result, setResult] = useState("");
 
   const onChange = (e) => {
     const name = e.target.name;
     let value = e.target.value;
 
-    setInput({ ...input, [name]: value });
+    if (name === "file") {
+      setLoading(true);
+
+      if (e.target.files.length > 0) {
+        if (e.target.files.length <= 5) {
+          for (let i = 0; i < e.target.files.length; i++) {
+            const file = e.target.files[i];
+            setImages((prev) => [...prev, file]);
+            setAddImages((prev) => [...prev, file]);
+          }
+        } else {
+          setResult("fail");
+          setMessage("최대 5장까지만 업로드할 수 있어요!");
+        }
+      }
+
+      setLoading(false);
+    } else {
+      setInput({ ...input, [name]: value });
+    }
   };
 
   const onSubmit = async (e) => {
@@ -33,27 +71,53 @@ export default function EditTweetForm({ handleClose, ...data }) {
 
     try {
       setLoading(true);
-      const docRef = doc(db, "tweets", data.id);
-      const photoRef = ref(storage, `tweets/${user.uid}/${data.id}`);
 
-      if (input.photo) {
-        if (data.photo) {
+      // 이미지 삭제
+      if (removeImgages) {
+        removeImgages.forEach(async (image) => {
+          // storage 삭제
+          const path = decodeURIComponent(image.split("/o/")[1].split("?")[0]);
+          const photoRef = ref(storage, path);
           await deleteObject(photoRef);
-        }
 
-        const result = await uploadBytes(photoRef, input.photo);
-        const url = await getDownloadURL(result.ref);
-        await updateDoc(docRef, {
-          tweet: input.tweet,
-          photo: url,
-          updatedAt: Date.now(),
-        });
-      } else {
-        await updateDoc(docRef, {
-          tweet: input.tweet,
-          updatedAt: Date.now(),
+          // db 삭제
+          const imagesQuery = query(
+            collection(db, `images`),
+            where("tweetId", "==", data.id),
+            where("url", "==", image)
+          );
+
+          const querySnapshot = await getDocs(imagesQuery);
+          querySnapshot.forEach(async (snapshot) => {
+            await deleteDoc(doc(db, "images", snapshot.id));
+          });
         });
       }
+
+      // 이미지 추가
+      if (addImages) {
+        addImages.forEach(async (image) => {
+          // storage 추가
+          const uuid = uuidv4();
+          const locationRef = ref(storage, `tweets/${data.id}/${uuid}`);
+          const result = await uploadBytes(locationRef, image);
+          const url = await getDownloadURL(result.ref);
+
+          // db 추가
+          await addDoc(collection(db, "images"), {
+            tweetId: data.id,
+            url: url,
+            createdAt: Date.now(),
+          });
+        });
+      }
+
+      // 내용 수정
+      const docRef = doc(db, "tweets", data.id);
+      await updateDoc(docRef, {
+        tweet: input.tweet,
+        updatedAt: Date.now(),
+      });
 
       handleClose();
     } catch (error) {
@@ -63,41 +127,32 @@ export default function EditTweetForm({ handleClose, ...data }) {
     }
   };
 
+  const clieckRemoveImage = (index) => {
+    // 이미 업로드된 사진만 담는다.
+    if (typeof images[index] === "string") {
+      setRemoveImages((prev) => [...prev, images[index]]);
+    }
+
+    const newImages = images.filter((item, itemIndex) => itemIndex !== index);
+    setImages(newImages);
+  };
+
   return (
-    <form className="post-tweet-form" onSubmit={onSubmit}>
-      <img
-        src={
-          input.photo === undefined || typeof input.photo === "string"
-            ? input.photo
-            : window.URL.createObjectURL(input.photo)
-        }
-      />
-      <textarea
-        rows={5}
-        maxLength={180}
-        className="text-area"
-        placeholder="무슨 일이 일어나고 있나요?"
-        name="tweet"
-        value={input.tweet}
+    <div className="post">
+      {images.length > 0 ? (
+        <ImageSlider
+          images={images}
+          clieckRemoveImage={clieckRemoveImage}
+          isEdit={true}
+        ></ImageSlider>
+      ) : null}
+      <PostTweetForm
+        {...input}
         onChange={onChange}
-      ></textarea>
-      <label className="file-btn" htmlFor="photo">
-        사진 수정하기
-      </label>
-      <input
-        className="file-input"
-        type="file"
-        id="photo"
-        accept="image/*"
-        name="photo"
-        onChange={onChange}
-      ></input>
-      <input
-        className="submit-btn"
-        type="submit"
-        value="수정하기"
-        onClick={onSubmit}
-      ></input>
-    </form>
+        onSubmit={onSubmit}
+      ></PostTweetForm>
+      <SnackBar message={message} result={result}></SnackBar>
+      <BackDrop isLoading={isLoading}></BackDrop>
+    </div>
   );
 }

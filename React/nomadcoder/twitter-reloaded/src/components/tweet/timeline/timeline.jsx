@@ -36,14 +36,41 @@ export default function Timeline() {
           reply: { count: 0 },
           retweet: { count: 0 },
           user: { id: tweetData.userId, name: "", photo: "" },
+          image: [],
         };
       });
 
       // 부모 상태에 트윗 데이터 설정
       setTweet(tweetsData);
 
-      tweetsData.forEach((tweet) => {
+      tweetsData.forEach(async (tweet) => {
         delete tweet.userId;
+
+        const imagesQuery = query(
+          collection(db, "images"),
+          where("tweetId", "==", tweet.id),
+          orderBy("__name__", "asc")
+        );
+
+        onSnapshot(imagesQuery, (snapshot) => {
+          const imageArr = [];
+
+          snapshot.docs.forEach((doc) => {
+            imageArr.push(doc.data().url);
+          });
+
+          setTweet((prevTweets) => {
+            return prevTweets.map((prevTweet) => {
+              if (prevTweet.id === tweet.id) {
+                return {
+                  ...prevTweet,
+                  images: imageArr,
+                };
+              }
+              return prevTweet;
+            });
+          });
+        });
 
         const userQuery = query(
           collection(db, "user"),
