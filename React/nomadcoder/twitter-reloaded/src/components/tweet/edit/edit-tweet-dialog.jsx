@@ -18,10 +18,10 @@ export default function EditTweetDialog({ isOpen, handleClose, ...data }) {
             border: "1px solid white",
             borderRadius: "20px",
             resize: "none",
-            width: "fit-content",
+            width: "730px",
             height: "fit-content",
             color: "white",
-            maxWidth: "fit-content",
+            maxWidth: "730px",
           },
         }}
       >

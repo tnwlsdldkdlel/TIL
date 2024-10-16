@@ -179,10 +179,10 @@ export default function AlarmDialog({ isOpen, handleClose, onClickDetail }) {
             border: "1px solid white",
             borderRadius: "20px",
             resize: "none",
-            width: "fit-content",
+            width: "730px",
             height: "fit-content",
             color: "white",
-            maxWidth: "fit-content",
+            maxWidth: "730px",
           },
         }}
       >
@@ -206,13 +206,21 @@ export default function AlarmDialog({ isOpen, handleClose, onClickDetail }) {
           </div>
         </DialogTitle>
         <DialogContent className="scrollable">
-          {alarms.map((alarm) => {
-            return alarm.tweetId ? (
-              <Alarm key={alarm.id} onClickDetail={onClickDetail} {...alarm} />
-            ) : (
-              <FollowAlarm key={alarm.id} {...alarm}></FollowAlarm>
-            );
-          })}
+          {alarms.length > 0 ? (
+            alarms.map((alarm) => {
+              return alarm.tweetId ? (
+                <Alarm
+                  key={alarm.id}
+                  onClickDetail={onClickDetail}
+                  {...alarm}
+                />
+              ) : (
+                <FollowAlarm key={alarm.id} {...alarm}></FollowAlarm>
+              );
+            })
+          ) : (
+            <div className="empty">아직 알림이 없습니다.</div>
+          )}
         </DialogContent>
       </Dialog>
     </Fragment>
