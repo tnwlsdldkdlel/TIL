@@ -70,8 +70,8 @@ export default function Timeline() {
       tweetsQuery = query(
         collection(db, "tweets"),
         limit(PAGE),
-        orderBy("createdAt", "desc"),
-        startAfter(lastVisible)
+        startAfter(lastVisible),
+        orderBy("createdAt", "desc")
       );
     }
 

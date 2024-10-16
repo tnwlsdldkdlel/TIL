@@ -1,7 +1,6 @@
 [class^="alarm_"] {
   display: flex;
   margin: 4px 0;
-  justify-content: space-between;
   cursor: pointer;
   height: 50px;
 }
@@ -10,6 +9,7 @@
   display: flex;
   gap: 10px;
   align-items: center !important;
+  width: 90%;
 }
 
 [class^="alarm_"] .left > img,
@@ -44,6 +44,10 @@
   font-size: 13px;
   font-weight: 600;
   cursor: pointer;
+}
+
+[class^="alarm_"] .right {
+  width: 10%;
 }
 
 [class^="alarm_"] .right > img {
