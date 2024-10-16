@@ -1,29 +1,89 @@
-import { useEffect, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import "./timeline.css";
 import {
   collection,
+  getDocs,
   limit,
   onSnapshot,
   orderBy,
   query,
+  startAfter,
   where,
 } from "firebase/firestore";
 import { auth, db } from "../../../firebase";
 import Tweet from "../tweet";
 import ReTweet from "../re-tweet";
+import BackDrop from "../../common/loading";
 
 export default function Timeline() {
   const [tweets, setTweet] = useState([]);
   const user = auth.currentUser;
+  const scrollableDivRef = useRef(null);
+  const PAGE = 20;
+  let lastVisible = null;
+  let hasMore = true;
+  let lastScrollTop = 0;
+  const [isLoading, setIsLoading] = useState(false);
 
   useEffect(() => {
-    const tweetsQuery = query(
-      collection(db, "tweets"),
-      limit(20),
-      orderBy("createdAt", "desc")
-    );
+    fetchInitialTweets(false);
 
-    const unsubscribeTweets = onSnapshot(tweetsQuery, (snapshot) => {
+    const scrollableDiv = scrollableDivRef.current;
+    if (scrollableDiv) {
+      scrollableDiv.addEventListener("scroll", handleScroll);
+    }
+
+    return () => {
+      if (scrollableDiv) {
+        scrollableDiv.removeEventListener("scroll", handleScroll);
+      }
+    };
+  }, []);
+
+  const handleScroll = () => {
+    if (scrollableDivRef.current) {
+      const scrollTop = scrollableDivRef.current.scrollTop;
+
+      if (scrollTop - lastScrollTop >= 1900) {
+        lastScrollTop = scrollTop;
+
+        const unsubscribe = fetchInitialTweets(true);
+
+        return () => {
+          unsubscribe();
+        };
+      }
+    }
+  };
+
+  const fetchInitialTweets = async (isScrolled) => {
+    setIsLoading(true);
+
+    let tweetsQuery = null;
+    if (!isScrolled) {
+      tweetsQuery = query(
+        collection(db, "tweets"),
+        limit(PAGE),
+        orderBy("createdAt", "desc")
+      );
+    } else {
+      tweetsQuery = query(
+        collection(db, "tweets"),
+        limit(PAGE),
+        orderBy("createdAt", "desc"),
+        startAfter(lastVisible)
+      );
+    }
+
+    try {
+      const snapshot = await getDocs(tweetsQuery);
+
+      // 뒤에 마지막으로 문서가 있는지 확인한다.
+      hasMore = snapshot.docs.length === PAGE;
+
+      // 마지막 문서가 뭔지
+      lastVisible = snapshot.docs[snapshot.docs.length - 1];
+
       const tweetsData = snapshot.docs.map((doc) => {
         const tweetData = doc.data();
         const tweetId = doc.id;
@@ -41,11 +101,17 @@ export default function Timeline() {
       });
 
       // 부모 상태에 트윗 데이터 설정
-      setTweet(tweetsData);
+      if (isScrolled) {
+        setTweet((prev) => [...prev, ...tweetsData]);
+      } else {
+        setTweet(tweetsData);
+      }
 
+      // 실시간으로 트윗의 각종 데이터를 업데이트
       tweetsData.forEach(async (tweet) => {
         delete tweet.userId;
 
+        // 이미지 업데이트
         const imagesQuery = query(
           collection(db, "images"),
           where("tweetId", "==", tweet.id),
@@ -53,11 +119,7 @@ export default function Timeline() {
         );
 
         onSnapshot(imagesQuery, (snapshot) => {
-          const imageArr = [];
-
-          snapshot.docs.forEach((doc) => {
-            imageArr.push(doc.data().url);
-          });
+          const imageArr = snapshot.docs.map((doc) => doc.data().url);
 
           setTweet((prevTweets) => {
             return prevTweets.map((prevTweet) => {
@@ -72,6 +134,7 @@ export default function Timeline() {
           });
         });
 
+        // 사용자 정보 업데이트
         const userQuery = query(
           collection(db, "user"),
           where("id", "==", tweet.user.id)
@@ -99,6 +162,7 @@ export default function Timeline() {
           });
         });
 
+        // 좋아요 업데이트
         const likesQuery = query(
           collection(db, "likes"),
           where("tweetId", "==", tweet.id)
@@ -114,7 +178,6 @@ export default function Timeline() {
             }
           });
 
-          // 좋아요 업데이트
           setTweet((prevTweets) => {
             return prevTweets.map((prevTweet) => {
               if (prevTweet.id === tweet.id) {
@@ -128,6 +191,7 @@ export default function Timeline() {
           });
         });
 
+        // 댓글 업데이트
         const repliesQuery = query(
           collection(db, "replies"),
           where("tweetId", "==", tweet.id)
@@ -136,7 +200,6 @@ export default function Timeline() {
         onSnapshot(repliesQuery, (replySnapshot) => {
           const replyCount = replySnapshot.docs.length;
 
-          // 댓글 업데이트
           setTweet((prevTweets) => {
             return prevTweets.map((prevTweet) => {
               if (prevTweet.id === tweet.id) {
@@ -150,6 +213,7 @@ export default function Timeline() {
           });
         });
 
+        // 리트윗 업데이트
         const retweetQuery = query(
           collection(db, "tweets"),
           where("retweetId", "==", tweet.id)
@@ -158,7 +222,6 @@ export default function Timeline() {
         onSnapshot(retweetQuery, (retweetSnapshot) => {
           const retweetCount = retweetSnapshot.docs.length;
 
-          // content 업데이트
           setTweet((prevTweets) => {
             return prevTweets.map((prevTweet) => {
               if (prevTweet.id === tweet.id) {
@@ -172,15 +235,15 @@ export default function Timeline() {
           });
         });
       });
-    });
-
-    return () => {
-      unsubscribeTweets();
-    };
-  }, []);
+    } catch (error) {
+      console.error("Error fetching initial tweets:", error);
+    } finally {
+      setIsLoading(false);
+    }
+  };
 
   return (
-    <div className="time-line scrollable">
+    <div className="time-line scrollable" ref={scrollableDivRef}>
       {tweets.map((item, index) =>
         item.retweetId != undefined ? (
           <ReTweet
@@ -192,6 +255,7 @@ export default function Timeline() {
           <Tweet key={item.id} isLast={index === tweets.length - 1} {...item} />
         )
       )}
+      <BackDrop isLoading={isLoading}></BackDrop>
     </div>
   );
 }

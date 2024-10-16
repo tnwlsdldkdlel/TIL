@@ -9,7 +9,7 @@ import {
 } from "firebase/firestore";
 import { auth, db, storage } from "../../firebase";
 import "./tweet.css";
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import { IconButton, Menu, MenuItem } from "@mui/material";
 import MoreVertIcon from "@mui/icons-material/MoreVert";
 import EditTweetDialog from "./edit/edit-tweet-dialog";

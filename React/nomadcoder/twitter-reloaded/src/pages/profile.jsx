@@ -1,17 +1,21 @@
 import "./profile.css";
 import { auth, db } from "../firebase";
-import { useEffect, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import {
   addDoc,
   collection,
+  getDocs,
+  limit,
   onSnapshot,
   orderBy,
   query,
+  startAfter,
   where,
 } from "firebase/firestore";
 import Tweet from "../components/tweet/tweet";
 import ReTweet from "../components/tweet/re-tweet";
 import { useLocation, useNavigate } from "react-router-dom";
+import BackDrop from "../components/common/loading";
 
 export default function Profile() {
   const user = auth.currentUser;
@@ -24,23 +28,92 @@ export default function Profile() {
   const [followingCount, setFollowingCount] = useState(0);
   const [followerCount, setFollwerCount] = useState(0);
   const [isFollow, setIsFollow] = useState(false);
+  const scrollableDivRef = useRef(null);
+  const PAGE = 20;
+  let lastVisible = null;
+  let hasMore = true;
+  let lastScrollTop = 0;
+  const [isLoading, setIsLoading] = useState(false);
+
+  let uid = "";
+  if (userId && userId !== user.uid) {
+    uid = userId;
+  } else {
+    uid = user.uid;
+  }
 
   useEffect(() => {
-    let uid = "";
-    if (userId && userId !== user.uid) {
-      uid = userId;
-    } else {
-      uid = user.uid;
+    getTweetCount();
+    fetchInitialTweets(false);
+    getUserInfo();
+
+    const scrollableDiv = scrollableDivRef.current;
+    if (scrollableDiv) {
+      scrollableDiv.addEventListener("scroll", handleScroll);
     }
 
+    return () => {
+      if (scrollableDiv) {
+        scrollableDiv.removeEventListener("scroll", handleScroll);
+      }
+    };
+  }, [userId]);
+
+  const getUserInfo = async () => {
+    const infoQuery = query(collection(db, "user"), where("id", "==", uid));
+    const snapshot = await getDocs(infoQuery);
+
+    snapshot.docs.map((doc) => {
+      const infoData = doc.data();
+
+      setInfo({
+        ...info,
+        intro: infoData.intro,
+        name: infoData.name,
+        photo: infoData.photo,
+      });
+    });
+  };
+
+  const getTweetCount = async () => {
     const tweetsQuery = query(
       collection(db, "tweets"),
-      where("userId", "==", uid),
-      orderBy("__name__", "desc")
+      where("userId", "==", uid)
     );
 
-    const unsubscribe = onSnapshot(tweetsQuery, (snapshot) => {
-      setTweetCount(snapshot.docs.length);
+    const snapshot = await getDocs(tweetsQuery);
+    setTweetCount(snapshot.docs.length);
+  };
+
+  const fetchInitialTweets = async (isScrolled) => {
+    setIsLoading(true);
+
+    let tweetsQuery = null;
+    if (!isScrolled) {
+      tweetsQuery = query(
+        collection(db, "tweets"),
+        where("userId", "==", uid),
+        limit(PAGE),
+        orderBy("createdAt", "desc")
+      );
+    } else {
+      tweetsQuery = query(
+        collection(db, "tweets"),
+        where("userId", "==", uid),
+        limit(PAGE),
+        orderBy("createdAt", "desc"),
+        startAfter(lastVisible)
+      );
+    }
+
+    try {
+      const snapshot = await getDocs(tweetsQuery);
+
+      // 뒤에 마지막으로 문서가 있는지 확인한다.
+      hasMore = snapshot.docs.length === PAGE;
+
+      // 마지막 문서가 뭔지
+      lastVisible = snapshot.docs[snapshot.docs.length - 1];
 
       const tweetsData = snapshot.docs.map((doc) => {
         const tweetData = doc.data();
@@ -57,8 +130,9 @@ export default function Profile() {
         };
       });
 
+      // 실시간 업데이트 로직
       tweetsData.forEach((item) => {
-        delete tweet.userId;
+        delete item.userId;
 
         const imagesQuery = query(
           collection(db, "images"),
@@ -67,11 +141,7 @@ export default function Profile() {
         );
 
         onSnapshot(imagesQuery, (snapshot) => {
-          const imageArr = [];
-
-          snapshot.docs.forEach((doc) => {
-            imageArr.push(doc.data().url);
-          });
+          const imageArr = snapshot.docs.map((doc) => doc.data().url);
 
           setTweet((prevTweets) => {
             return prevTweets.map((prevTweet) => {
@@ -172,10 +242,9 @@ export default function Profile() {
         onSnapshot(retweetQuery, (retweetSnapshot) => {
           const retweetCount = retweetSnapshot.docs.length;
 
-          // content 업데이트
           setTweet((prevTweets) => {
             return prevTweets.map((prevTweet) => {
-              if (prevTweet.id === tweet.id) {
+              if (prevTweet.id === item.id) {
                 return {
                   ...prevTweet,
                   retweet: { count: retweetCount },
@@ -187,8 +256,7 @@ export default function Profile() {
         });
       });
 
-      // 팔로워 : 나`를` 팔로우하는 사람들 => 내가 targetId
-      // 팔로잉 : 내`가` 팔로우한 사람들 => 내가 userId
+      // 팔로워, 팔로잉 실시간 구독
       const followerQuery = query(
         collection(db, "follow"),
         where("targetId", "==", uid)
@@ -207,7 +275,7 @@ export default function Profile() {
         setFollowingCount(snapshot.docs.length);
       });
 
-      // `내가` 상대방을 팔로우했는지
+      // `내가` 상대방을 팔로우했는지 확인
       if (uid === userId) {
         const followQuery = query(
           collection(db, "follow"),
@@ -220,41 +288,33 @@ export default function Profile() {
         });
       }
 
-      setTweet(tweetsData);
-    });
-
-    return () => {
-      unsubscribe();
-    };
-  }, [userId]);
-
-  useEffect(() => {
-    let uid = "";
-
-    if (userId && userId !== user.uid) {
-      uid = userId;
-    } else {
-      uid = user.uid;
+      if (isScrolled) {
+        setTweet((prev) => [...prev, ...tweetsData]);
+      } else {
+        setTweet(tweetsData);
+      }
+    } catch (error) {
+      console.error("Error fetching initial tweets:", error);
+    } finally {
+      setIsLoading(false);
     }
+  };
 
-    const infoQuery = query(collection(db, "user"), where("id", "==", uid));
-    const unsubscribe = onSnapshot(infoQuery, (snapshot) => {
-      snapshot.docs.map((doc) => {
-        const infoData = doc.data();
+  const handleScroll = () => {
+    if (scrollableDivRef.current) {
+      const scrollTop = scrollableDivRef.current.scrollTop;
 
-        setInfo({
-          ...info,
-          intro: infoData.intro,
-          name: infoData.name,
-          photo: infoData.photo,
-        });
-      });
-    });
+      if (scrollTop - lastScrollTop >= 1900) {
+        lastScrollTop = scrollTop;
 
-    return () => {
-      unsubscribe();
-    };
-  }, [userId]);
+        const unsubscribe = fetchInitialTweets(true);
+
+        return () => {
+          unsubscribe();
+        };
+      }
+    }
+  };
 
   const onClickProfile = () => {
     navigate(`/profile/edit`);
@@ -278,8 +338,6 @@ export default function Profile() {
       createdAt: Date.now(),
     });
   };
-
-  console.log(tweet);
 
   return (
     <div className="profile">
@@ -357,7 +415,7 @@ export default function Profile() {
           팔로우
         </button>
       )}
-      <div className="my-tweets scrollable">
+      <div className="my-tweets scrollable" ref={scrollableDivRef}>
         {tweet.map((item, index) =>
           item.retweetId != undefined ? (
             <ReTweet
@@ -374,6 +432,7 @@ export default function Profile() {
           )
         )}
       </div>
+      <BackDrop isLoading={isLoading}></BackDrop>
     </div>
   );
 }
