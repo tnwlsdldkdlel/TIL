@@ -252,7 +252,12 @@ export default function Timeline() {
             {...item}
           />
         ) : (
-          <Tweet key={item.id} isLast={index === tweets.length - 1} {...item} />
+          <Tweet
+            key={item.id}
+            isLast={index === tweets.length - 1}
+            fetchInitialTweets={fetchInitialTweets}
+            {...item}
+          />
         )
       )}
       <BackDrop isLoading={isLoading}></BackDrop>

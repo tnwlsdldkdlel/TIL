@@ -1,8 +1,15 @@
 import { Dialog, DialogTitle } from "@mui/material";
 import TweetReply from "./tweet-reply";
 import { useEffect, useState } from "react";
-import { collection, onSnapshot, query, where } from "firebase/firestore";
-import { auth, db } from "../../../firebase";
+import {
+  collection,
+  getDocs,
+  onSnapshot,
+  orderBy,
+  query,
+  where,
+} from "firebase/firestore";
+import { db } from "../../../firebase";
 import PostTweetReplyForm from "./post-tweet-reply-form";
 import Tweet from "../tweet";
 
@@ -12,96 +19,94 @@ export default function TweetReplyDialog({
   ...data
 }) {
   const [replies, setReplies] = useState([]);
-  const user = auth.currentUser;
 
   useEffect(() => {
+    getData();
+  }, [data.id]);
+
+  const getData = async () => {
     if (!data.id) return;
     delete data.username;
 
     const repliesQuery = query(
       collection(db, "replies"),
-      where("tweetId", "==", data.id)
+      where("tweetId", "==", data.id),
+      orderBy("createdAt", "desc")
     );
 
     // 실시간 댓글
-    const unsubscribeReplies = onSnapshot(repliesQuery, (snapshot) => {
-      const repliesData = snapshot.docs.map((doc) => {
-        const replyData = doc.data();
-        const replyId = doc.id;
+    const snapshot = await getDocs(repliesQuery);
+    const repliesData = snapshot.docs.map((doc) => {
+      const replyData = doc.data();
+      const replyId = doc.id;
 
-        return {
-          ...replyData,
-          id: replyId,
-          like: { isLiked: false, count: 0 },
-          user: { id: replyData.userId, name: "", photo: "" }, // 초기값 설정
-        };
-      });
-
-      setReplies(repliesData);
-
-      repliesData.forEach((reply) => {
-        const likesQuery = query(
-          collection(db, "likes"),
-          where("replyId", "==", reply.id)
-        );
-
-        // 조아요 업데이트
-        onSnapshot(likesQuery, (likeSnapshot) => {
-          const likeCount = likeSnapshot.docs.length;
-          let likeId = 0;
-
-          const isLiked = likeSnapshot.docs.some((likeDoc) => {
-            if (likeDoc.data().userId === user.uid) {
-              likeId = likeDoc.id;
-              return true;
-            }
-            return false;
-          });
-
-          setReplies((prevReplies) =>
-            prevReplies.map((prevReply) => {
-              if (prevReply.id === reply.id) {
-                return {
-                  ...prevReply,
-                  like: { isLiked, count: likeCount, id: likeId },
-                };
-              }
-              return prevReply;
-            })
-          );
-        });
-
-        const userQuery = query(
-          collection(db, "user"),
-          where("id", "==", reply.user.id)
-        );
-
-        onSnapshot(userQuery, (likeSnapshot) => {
-          const user = likeSnapshot.docs[0].data();
-
-          setReplies((prevReplies) =>
-            prevReplies.map((prevReply) => {
-              if (prevReply.user.id === user.id) {
-                return {
-                  ...prevReply,
-                  user: {
-                    id: user.id,
-                    name: user.name,
-                    photo: user.photo || "",
-                  },
-                };
-              }
-              return prevReply;
-            })
-          );
-        });
-      });
+      return {
+        ...replyData,
+        id: replyId,
+        like: { isLiked: false, count: 0 },
+        user: { id: replyData.userId, name: "", photo: "" }, // 초기값 설정
+      };
     });
 
-    return () => {
-      unsubscribeReplies();
-    };
-  }, [data.id]);
+    setReplies(repliesData);
+
+    repliesData.forEach(async (reply) => {
+      const likesQuery = query(
+        collection(db, "likes"),
+        where("replyId", "==", reply.id)
+      );
+
+      // 조아요 업데이트
+      onSnapshot(likesQuery, (likeSnapshot) => {
+        const likeCount = likeSnapshot.docs.length;
+        let likeId = 0;
+
+        const isLiked = likeSnapshot.docs.some((likeDoc) => {
+          if (likeDoc.data().userId === user.id) {
+            likeId = likeDoc.id;
+            return true;
+          }
+          return false;
+        });
+
+        setReplies((prevReplies) =>
+          prevReplies.map((prevReply) => {
+            if (prevReply.id === reply.id) {
+              return {
+                ...prevReply,
+                like: { isLiked, count: likeCount, id: likeId },
+              };
+            }
+            return prevReply;
+          })
+        );
+      });
+
+      const userQuery = query(
+        collection(db, "user"),
+        where("id", "==", reply.user.id)
+      );
+
+      const userSnapshot = await getDocs(userQuery);
+      const user = userSnapshot.docs[0].data();
+
+      setReplies((prevReplies) =>
+        prevReplies.map((prevReply) => {
+          if (prevReply.user.id === user.id) {
+            return {
+              ...prevReply,
+              user: {
+                id: user.id,
+                name: user.name,
+                photo: user.photo || "",
+              },
+            };
+          }
+          return prevReply;
+        })
+      );
+    });
+  };
 
   return (
     <Dialog
@@ -113,10 +118,10 @@ export default function TweetReplyDialog({
           border: "1px solid white",
           borderRadius: "20px",
           resize: "none",
-          width: "fit-content",
+          width: "730px",
           height: "fit-content",
           color: "white",
-          maxWidth: "fit-content",
+          maxWidth: "730px",
         },
       }}
     >

@@ -20,7 +20,13 @@ import ReTweetDialog from "./retweet/tweet-retweet-dialog";
 import { useNavigate } from "react-router-dom";
 import ImageSlider from "../common/image-slider";
 
-export default function Tweet({ isReply, isLast, isRetweet, ...data }) {
+export default function Tweet({
+  isReply,
+  isLast,
+  isRetweet,
+  fetchInitialTweets,
+  ...data
+}) {
   const [isOpen, setIsOpen] = useState("");
   const [isOpenReply, setIsOpenReply] = useState(false);
   const [isOpenReTweet, setIsOpenReTweet] = useState(false);
@@ -104,6 +110,7 @@ export default function Tweet({ isReply, isLast, isRetweet, ...data }) {
     setAnchorEl(null);
     setIsOpenReply(false);
     setIsOpenReTweet(false);
+    fetchInitialTweets();
   };
 
   const onClickMenu = (e) => {
@@ -282,10 +289,8 @@ export default function Tweet({ isReply, isLast, isRetweet, ...data }) {
             </div>
           )}
         </div>
-        <div className="middle">
-          <p className="payload" onClick={isReply ? "" : onClickRelpyDialog}>
-            {data.tweet}
-          </p>
+        <div className="middle" onClick={isReply ? "" : onClickRelpyDialog}>
+          <p className="payload">{data.tweet}</p>
           {data.images && data.images.length > 0 ? (
             <div className="image">
               <ImageSlider images={data.images}></ImageSlider>

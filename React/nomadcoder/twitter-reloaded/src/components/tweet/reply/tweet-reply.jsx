@@ -1,8 +1,6 @@
 import { useState } from "react";
 import { timeAgo } from "../../../common/time-ago";
 import { auth, db } from "../../../firebase";
-import { IconButton, Menu, MenuItem } from "@mui/material";
-import MoreVertIcon from "@mui/icons-material/MoreVert";
 import {
   addDoc,
   collection,
@@ -15,53 +13,6 @@ import {
 
 export default function TweetReply({ isLast, userId, tweetId, ...reply }) {
   const user = auth.currentUser;
-  const [anchorEl, setAnchorEl] = useState(null);
-  const isMenuOpen = Boolean(anchorEl);
-  const [isOpen, setIsOpen] = useState("");
-
-  const onClickMenu = (e) => {
-    e.stopPropagation();
-    setAnchorEl(e.currentTarget);
-  };
-
-  const onClickCloseMenu = () => {
-    setAnchorEl(null);
-  };
-
-  const onClickMenuItem = (target) => {
-    setIsOpen(target);
-  };
-
-  const onDelete = async () => {
-    try {
-      const likeQuery = query(
-        collection(db, `likes`),
-        where("replyId", "==", reply.id)
-      );
-
-      // reply
-      await deleteDoc(doc(db, "replies", reply.id));
-
-      // like
-      const likeSnapshot = await getDocs(likeQuery);
-      likeSnapshot.forEach(async (item) => {
-        await deleteDoc(doc(db, "likes", item.id));
-      });
-
-      const alramQuery = query(
-        collection(db, "alarm"),
-        where("replyId", "==", reply.id)
-      );
-
-      // alarm
-      const alarmSnapshot = await getDocs(alramQuery);
-      alarmSnapshot.forEach(async (item) => {
-        await deleteDoc(doc(db, "alarm", item.id));
-      });
-    } catch (error) {
-      console.log(error);
-    }
-  };
 
   const onClickLike = async (e) => {
     e.stopPropagation();
@@ -104,68 +55,6 @@ export default function TweetReply({ isLast, userId, tweetId, ...reply }) {
           <div className="left">
             <div>{reply.user.name}</div>
             <div className="time">{timeAgo(reply.createdAt)}</div>
-          </div>
-          <div className="right">
-            {reply.user.name === user.displayName ? (
-              <div className="menu" onClick={onClickMenu}>
-                <IconButton
-                  className="btn"
-                  aria-label="more"
-                  id="long-button"
-                  aria-controls={open ? "long-menu" : undefined}
-                  aria-expanded={open ? "true" : undefined}
-                  aria-haspopup="true"
-                >
-                  <MoreVertIcon />
-                </IconButton>
-                <Menu
-                  id="basic-menu"
-                  MenuListProps={{
-                    "aria-labelledby": "basic-button",
-                  }}
-                  open={isMenuOpen}
-                  onClose={onClickCloseMenu}
-                  anchorEl={anchorEl}
-                  sx={{
-                    "& .MuiPaper-root": {
-                      backgroundColor: "black",
-                      color: "white",
-                      border: "1px solid white",
-                    },
-                    "& .MuiButtonBase-root": {
-                      borderBottom: "1px solid white",
-                    },
-                  }}
-                  anchorOrigin={{
-                    vertical: "bottom",
-                    horizontal: "right",
-                  }}
-                  transformOrigin={{
-                    vertical: "bottom",
-                    horizontal: "left",
-                  }}
-                  aria-hidden={!isOpen ? "false" : "true"}
-                >
-                  <MenuItem
-                    key={"edit"}
-                    onClick={() => onClickMenuItem("edit")}
-                  >
-                    Edit
-                  </MenuItem>
-                  <MenuItem
-                    key={"remove"}
-                    onClick={onDelete}
-                    sx={{
-                      borderBottom: "0px !important",
-                    }}
-                  >
-                    Remove
-                  </MenuItem>
-                </Menu>
-              </div>
-            ) : (
-              <></>
-            )}
           </div>
         </div>
         <div className="middle">

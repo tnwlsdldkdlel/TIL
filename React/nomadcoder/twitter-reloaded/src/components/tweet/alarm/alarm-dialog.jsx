@@ -5,7 +5,6 @@ import {
   collection,
   getDocs,
   limit,
-  onSnapshot,
   orderBy,
   query,
   where,
@@ -18,160 +17,155 @@ export default function AlarmDialog({ isOpen, handleClose, onClickDetail }) {
   const user = auth.currentUser;
 
   useEffect(() => {
+    getAlarm();
+  }, [user.uid]);
+
+  const getAlarm = async () => {
     const alarmQuery = query(
       collection(db, "alarm"),
       where("userId", "==", user.uid),
-      orderBy("__name__", "desc")
+      orderBy("createdAt", "desc")
     );
 
-    const unsubscribeAlarms = onSnapshot(alarmQuery, (snapshot) => {
-      const alarmsData = snapshot.docs.map((doc) => {
-        const alarmData = doc.data();
-        const alarmId = doc.id;
+    const snapshot = await getDocs(alarmQuery);
+    const alarmsData = snapshot.docs.map((doc) => {
+      const alarmData = doc.data();
+      const alarmId = doc.id;
 
-        return { ...alarmData, id: alarmId };
-      });
-
-      setAlarms(alarmsData);
-
-      alarmsData.forEach((alarm) => {
-        if (alarm.tweetId) {
-          const tweetQuery = query(
-            collection(db, "tweets"),
-            where("__name__", "==", alarm.tweetId),
-            limit(1)
-          );
-
-          onSnapshot(tweetQuery, (snapshot) => {
-            const tweetId = snapshot.docs[0].id;
-            if (tweetId === alarm.tweetId) {
-              setAlarms((prev) => {
-                return prev.map((item) => {
-                  if (item.id === alarm.id) {
-                    return {
-                      ...item,
-                      images: "",
-                    };
-                  }
-
-                  return item;
-                });
-              });
-            }
-          });
-
-          const imagesQuery = query(
-            collection(db, "images"),
-            where("tweetId", "==", alarm.tweetId),
-            orderBy("__name__", "asc"),
-            limit(1)
-          );
-
-          onSnapshot(imagesQuery, (snapshot) => {
-            if (snapshot.docs[0]) {
-              const tweetId = snapshot.docs[0].data().tweetId;
-              if (tweetId === alarm.tweetId) {
-                setAlarms((prev) => {
-                  return prev.map((item) => {
-                    if (item.id === alarm.id) {
-                      return {
-                        ...item,
-                        images: snapshot.docs[0].data().url,
-                      };
-                    }
-
-                    return item;
-                  });
-                });
-              }
-            }
-          });
-        }
-
-        // 팔로우정보
-        if (alarm.followId) {
-          const followQuery = query(
-            collection(db, "follow"),
-            where("__name__", "==", alarm.followId)
-          );
-
-          onSnapshot(followQuery, async (snapshot) => {
-            if (snapshot.docs.length > 0) {
-              const followId = snapshot.docs[0].id;
-              const followData = snapshot.docs[0].data();
-              let isFollowing = false;
-
-              // 나도 팔로우 했는지 확인
-              const followCollection = query(
-                collection(db, "follow"),
-                where("userId", "==", user.uid),
-                where("targetId", "==", alarm.targetId)
-              );
-
-              const followSnap = await getDocs(followCollection);
-              let followingId = "";
-
-              if (followSnap.docs.length !== 0) {
-                isFollowing = true;
-                followingId = followSnap.docs[0].id;
-              }
-
-              if (followData.targetId === user.uid) {
-                setAlarms((prev) => {
-                  return prev.map((item) => {
-                    if (item.id === alarm.id) {
-                      return {
-                        ...item,
-                        follow: {
-                          id: followId,
-                          followingId: followingId,
-                          isFollowing: isFollowing,
-                        },
-                      };
-                    }
-
-                    return item;
-                  });
-                });
-              }
-            }
-          });
-        }
-
-        if (alarm.targetId) {
-          const userQuery = query(
-            collection(db, "user"),
-            where("id", "==", alarm.targetId)
-          );
-
-          onSnapshot(userQuery, (snapshot) => {
-            const userData = snapshot.docs[0].data();
-
-            if (userData.id === alarm.targetId) {
-              const photo = userData.photo;
-
-              setAlarms((prev) => {
-                return prev.map((item) => {
-                  if (item.id === alarm.id) {
-                    return {
-                      ...item,
-                      user: { photo: photo },
-                    };
-                  }
-
-                  return item;
-                });
-              });
-            }
-          });
-        }
-      });
+      return { ...alarmData, id: alarmId };
     });
 
-    return () => {
-      unsubscribeAlarms();
-    };
-  }, [user.uid]);
+    setAlarms(alarmsData);
+
+    alarmsData.forEach(async (alarm) => {
+      if (alarm.tweetId) {
+        const tweetQuery = query(
+          collection(db, "tweets"),
+          where("__name__", "==", alarm.tweetId),
+          limit(1)
+        );
+
+        const snapshot = await getDocs(tweetQuery);
+        const tweetId = snapshot.docs[0].id;
+        if (tweetId === alarm.tweetId) {
+          setAlarms((prev) => {
+            return prev.map((item) => {
+              if (item.id === alarm.id) {
+                return {
+                  ...item,
+                  images: "",
+                };
+              }
+
+              return item;
+            });
+          });
+        }
+
+        const imagesQuery = query(
+          collection(db, "images"),
+          where("tweetId", "==", alarm.tweetId),
+          orderBy("__name__", "asc"),
+          limit(1)
+        );
+
+        const imagesSnapshot = await getDocs(imagesQuery);
+        if (imagesSnapshot.docs[0]) {
+          const tweetId = imagesSnapshot.docs[0].data().tweetId;
+          if (tweetId === alarm.tweetId) {
+            setAlarms((prev) => {
+              return prev.map((item) => {
+                if (item.id === alarm.id) {
+                  return {
+                    ...item,
+                    images: imagesSnapshot.docs[0].data().url,
+                  };
+                }
+
+                return item;
+              });
+            });
+          }
+        }
+      }
+
+      // 팔로우정보
+      if (alarm.followId) {
+        const followQuery = query(
+          collection(db, "follow"),
+          where("__name__", "==", alarm.followId)
+        );
+
+        const followSnapshot = await getDocs(followQuery);
+        if (followSnapshot.docs.length > 0) {
+          const followId = followSnapshot.docs[0].id;
+          const followData = followSnapshot.docs[0].data();
+          let isFollowing = false;
+
+          // 나도 팔로우 했는지 확인
+          const followCollection = query(
+            collection(db, "follow"),
+            where("userId", "==", user.uid),
+            where("targetId", "==", alarm.targetId)
+          );
+
+          const followSnap = await getDocs(followCollection);
+          let followingId = "";
+
+          if (followSnap.docs.length !== 0) {
+            isFollowing = true;
+            followingId = followSnap.docs[0].id;
+          }
+
+          if (followData.targetId === user.uid) {
+            setAlarms((prev) => {
+              return prev.map((item) => {
+                if (item.id === alarm.id) {
+                  return {
+                    ...item,
+                    follow: {
+                      id: followId,
+                      followingId: followingId,
+                      isFollowing: isFollowing,
+                    },
+                  };
+                }
+
+                return item;
+              });
+            });
+          }
+        }
+      }
+
+      if (alarm.targetId) {
+        const userQuery = query(
+          collection(db, "user"),
+          where("id", "==", alarm.targetId)
+        );
+
+        const userSnapshot = await getDocs(userQuery);
+        const userData = userSnapshot.docs[0].data();
+
+        if (userData.id === alarm.targetId) {
+          const photo = userData.photo;
+
+          setAlarms((prev) => {
+            return prev.map((item) => {
+              if (item.id === alarm.id) {
+                return {
+                  ...item,
+                  user: { photo: photo },
+                };
+              }
+
+              return item;
+            });
+          });
+        }
+      }
+    });
+  };
 
   return (
     <Fragment>

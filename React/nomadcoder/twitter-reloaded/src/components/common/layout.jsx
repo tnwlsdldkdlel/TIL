@@ -83,37 +83,53 @@ export default function Layout() {
       where("__name__", "==", tweetId)
     );
 
-    const unsubscribeTweets = onSnapshot(tweetQuery, (snapshot) => {
-      const tweetsData = snapshot.docs.map((doc) => {
-        const tweetData = doc.data();
-        const tweetId = doc.id;
+    const snapshot = await getDocs(tweetQuery);
+    const tweetsData = snapshot.docs.map((doc) => {
+      const tweetData = doc.data();
+      const tweetId = doc.id;
 
-        return {
-          ...tweetData,
-          id: tweetId,
-          like: { isLiked: false, count: 0 },
-          reply: { count: 0 },
-          retweet: { count: 0 },
-          user: { id: tweetData.userId, name: "", photo: "" },
-          images: "", // 첫 사진만 가져오도록 한다.
-        };
-      });
-
-      setTweet(tweetsData[0]);
-      getTweetLike(tweetsData[0].id);
-      getTweetReply(tweetsData[0].id);
-      getImages(tweetsData[0].id);
-
-      if (tweetsData[0].retweetId) {
-        getRetweet(tweet.retweetId);
-      }
-
-      setDetailOpen(true);
+      return {
+        ...tweetData,
+        id: tweetId,
+        like: { isLiked: false, count: 0 },
+        reply: { count: 0 },
+        retweet: { count: 0 },
+        user: { id: tweetData.userId, name: "", photo: "" },
+        images: "", // 첫 사진만 가져오도록 한다.
+      };
     });
 
-    return () => {
-      unsubscribeTweets();
-    };
+    setTweet(tweetsData[0]);
+
+    getTweetLike(tweetsData[0].id);
+    getTweetReply(tweetsData[0].id);
+    getImages(tweetsData[0].id);
+
+    if (tweetsData[0].retweetId) {
+      getRetweet(tweet.retweetId);
+    }
+
+    setDetailOpen(true);
+  };
+
+  const getImages = async (tweetId) => {
+    const imagesQuery = query(
+      collection(db, "images"),
+      where("tweetId", "==", tweetId),
+      orderBy("__name__", "asc")
+    );
+
+    const snapshot = await getDocs(imagesQuery);
+    if (snapshot.docs.length > 0) {
+      const imageArr = snapshot.docs.map((doc) => doc.data().url);
+
+      setTweet((prev) => {
+        return {
+          ...prev,
+          images: imageArr,
+        };
+      });
+    }
   };
 
   const getTweetLike = async (tweetId) => {
