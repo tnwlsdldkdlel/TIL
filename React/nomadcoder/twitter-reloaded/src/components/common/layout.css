@@ -29,6 +29,22 @@
   }
 }
 
+.layout .menu .menu-item.active {
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  border: 2px solid black;
+  height: 50px;
+  width: 50px;
+  border-radius: 50%;
+  background-color: white;
+  svg {
+    color: black;
+    width: 30px;
+  }
+}
+
 .layout .menu .menu-item.log-out {
   cursor: pointer;
   display: flex;

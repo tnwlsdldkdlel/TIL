@@ -3,7 +3,12 @@ import { auth, db } from "../../../firebase";
 import "../tweet.css";
 import { addDoc, collection } from "firebase/firestore";
 
-export default function PostTweetReplyForm({ tweetId, userId, tweet }) {
+export default function PostTweetReplyForm({
+  tweetId,
+  userId,
+  tweet,
+  getData,
+}) {
   const [input, setInput] = useState("");
   const user = auth.currentUser;
 
@@ -36,6 +41,7 @@ export default function PostTweetReplyForm({ tweetId, userId, tweet }) {
         createdAt: Date.now(),
       });
 
+      getData();
       setInput("");
     } catch (error) {
       console.log(error);

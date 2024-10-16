@@ -62,7 +62,7 @@ export default function TweetReplyDialog({
         let likeId = 0;
 
         const isLiked = likeSnapshot.docs.some((likeDoc) => {
-          if (likeDoc.data().userId === user.id) {
+          if (likeDoc.data().userId === reply.user.id) {
             likeId = likeDoc.id;
             return true;
           }
@@ -148,17 +148,22 @@ export default function TweetReplyDialog({
           <div className="title">
             <p>댓글</p>
           </div>
-          {replies.map((reply, index) => {
-            return (
-              <TweetReply
-                key={reply.id}
-                isLast={index === replies.length - 1}
-                userId={data.user.id}
-                tweetId={data.id}
-                {...reply}
-              />
-            );
-          })}
+
+          {replies.length > 0 ? (
+            replies.map((reply, index) => {
+              return (
+                <TweetReply
+                  key={reply.id}
+                  isLast={index === replies.length - 1}
+                  userId={data.user.id}
+                  tweetId={data.id}
+                  {...reply}
+                />
+              );
+            })
+          ) : (
+            <div className="empty">아직 댓글이 없습니다.</div>
+          )}
         </div>
         <div className="reply-form">
           <PostTweetReplyForm
@@ -167,6 +172,7 @@ export default function TweetReplyDialog({
             tweet={
               data.tweet > 10 ? data.tweet.substr(0, 10) + "..." : data.tweet
             }
+            getData={getData}
           />
         </div>
       </div>
