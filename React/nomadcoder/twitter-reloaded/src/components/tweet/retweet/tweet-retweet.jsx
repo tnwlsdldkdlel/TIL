@@ -74,19 +74,21 @@ export default function TweetReply({ isLast, ...reply }) {
       });
 
       // 알람
-      const content = `${user.displayName}님이 ${
-        reply.reply.length > 10
-          ? reply.reply.substr(0, 10) + "..."
-          : reply.reply
-      }댓글을 좋아합니다.`;
-      await addDoc(collection(db, "alarm"), {
-        userId: reply.userId, // 조아요 당한 사람 uid
-        targetId: user.uid, // 댓글을 조아요한 사람 uid
-        content: content,
-        replyId: reply.id,
-        isChecked: false,
-        createdAt: Date.now(),
-      });
+      if (user.uid !== reply.userId) {
+        const content = `${user.displayName}님이 ${
+          reply.reply.length > 10
+            ? reply.reply.substr(0, 10) + "..."
+            : reply.reply
+        }댓글을 좋아합니다.`;
+        await addDoc(collection(db, "alarm"), {
+          userId: reply.userId, // 조아요 당한 사람 uid
+          targetId: user.uid, // 댓글을 조아요한 사람 uid
+          content: content,
+          replyId: reply.id,
+          isChecked: false,
+          createdAt: Date.now(),
+        });
+      }
     }
   };
 

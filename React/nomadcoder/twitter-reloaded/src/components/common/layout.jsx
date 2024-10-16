@@ -24,9 +24,7 @@ export default function Layout() {
   const [menu, setMenu] = useState("/");
 
   const onLogout = async () => {
-    const ok = confirm("로그아웃 하시겠어요?");
-
-    if (ok) {
+    if (confirm("로그아웃 하시겠어요?")) {
       await auth.signOut();
       navigate("/login", { replace: true });
     }
