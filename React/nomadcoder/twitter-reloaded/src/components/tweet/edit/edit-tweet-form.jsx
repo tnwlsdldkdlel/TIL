@@ -1,4 +1,4 @@
-import { useEffect, useState } from "react";
+import { memo, useState } from "react";
 import "../edit/post-tweet-form.css";
 import { auth, db, storage } from "../../../firebase";
 import {
@@ -23,10 +23,10 @@ import SnackBar from "../../common/snack-bar";
 import BackDrop from "../../common/loading";
 import { v4 as uuidv4 } from "uuid";
 
-export default function EditTweetForm({ handleClose, ...data }) {
+function EditTweetForm({ handleClose, tweet, prevImages, id }) {
   const [isLoading, setLoading] = useState(false);
-  const [input, setInput] = useState(data);
-  const [images, setImages] = useState(data.images);
+  const [input, setInput] = useState(tweet);
+  const [images, setImages] = useState(prevImages);
   const [removeImgages, setRemoveImages] = useState([]);
   const [addImages, setAddImages] = useState([]);
   const [message, setMessage] = useState("");
@@ -34,7 +34,6 @@ export default function EditTweetForm({ handleClose, ...data }) {
 
   const onChange = (e) => {
     const name = e.target.name;
-    let value = e.target.value;
 
     if (name === "file") {
       setLoading(true);
@@ -54,19 +53,14 @@ export default function EditTweetForm({ handleClose, ...data }) {
 
       setLoading(false);
     } else {
-      setInput({ ...input, [name]: value });
+      setInput(e.target.value);
     }
   };
 
   const onSubmit = async (e) => {
     e.preventDefault();
     const user = auth.currentUser;
-    if (
-      !user ||
-      isLoading ||
-      input.tweet === "" ||
-      input.tweet.length > input.tweet.maxLength
-    )
+    if (!user || isLoading || input === "" || input.length > input.maxLength)
       return;
 
     try {
@@ -83,7 +77,7 @@ export default function EditTweetForm({ handleClose, ...data }) {
           // db 삭제
           const imagesQuery = query(
             collection(db, `images`),
-            where("tweetId", "==", data.id),
+            where("tweetId", "==", id),
             where("url", "==", image)
           );
 
@@ -99,13 +93,13 @@ export default function EditTweetForm({ handleClose, ...data }) {
         addImages.forEach(async (image) => {
           // storage 추가
           const uuid = uuidv4();
-          const locationRef = ref(storage, `tweets/${data.id}/${uuid}`);
+          const locationRef = ref(storage, `tweets/${id}/${uuid}`);
           const result = await uploadBytes(locationRef, image);
           const url = await getDownloadURL(result.ref);
 
           // db 추가
           await addDoc(collection(db, "images"), {
-            tweetId: data.id,
+            tweetId: id,
             url: url,
             createdAt: Date.now(),
           });
@@ -113,9 +107,9 @@ export default function EditTweetForm({ handleClose, ...data }) {
       }
 
       // 내용 수정
-      const docRef = doc(db, "tweets", data.id);
+      const docRef = doc(db, "tweets", id);
       await updateDoc(docRef, {
-        tweet: input.tweet,
+        tweet: input,
         updatedAt: Date.now(),
       });
 
@@ -147,7 +141,7 @@ export default function EditTweetForm({ handleClose, ...data }) {
         ></ImageSlider>
       ) : null}
       <PostTweetForm
-        {...input}
+        tweet={input}
         onChange={onChange}
         onSubmit={onSubmit}
       ></PostTweetForm>
@@ -156,3 +150,5 @@ export default function EditTweetForm({ handleClose, ...data }) {
     </div>
   );
 }
+
+export default memo(EditTweetForm);

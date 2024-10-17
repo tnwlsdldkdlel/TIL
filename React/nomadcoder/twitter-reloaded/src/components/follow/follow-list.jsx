@@ -1,51 +1,52 @@
 import "./follower.css";
 import { IconButton } from "@mui/material";
 import MoreVertIcon from "@mui/icons-material/MoreVert";
-import { useState } from "react";
+import { memo, useCallback, useState } from "react";
 import FollowRemoveDialog from "./follow-remove-dialog";
 import { useNavigate } from "react-router-dom";
 import { addDoc, collection, doc, updateDoc } from "firebase/firestore";
 import { auth, db } from "../../firebase";
 
-export default function FollowList({ ...data }) {
+function FollowList({ ...data }) {
   const [isOpen, setOpen] = useState(false);
   const navigate = useNavigate();
   const user = auth.currentUser;
 
-  const onClickMenu = () => {
+  const onClickMenu = useCallback(() => {
     setOpen(true);
-  };
+  }, []);
 
-  const handleClose = () => {
-    setOpen(false);
-  };
+  const handleClose = useCallback(() => setOpen(false), []);
 
   const onClickProfile = () => {
     navigate(`/profile`, { state: { userId: data.user.id } });
   };
 
   const onClickFollow = async () => {
-    const docRef = doc(db, "follow", data.follow.id);
+    const docRef = doc(db, "follow", data.id);
+
     await updateDoc(docRef, {
       updatedAt: Date.now(),
     });
 
     const followDoc = await addDoc(collection(db, "follow"), {
       userId: user.uid, // 팔로우 건 사람
-      targetId: data.targetId, // 팔로우 당한 사람
+      targetId: data.user.id, // 팔로우 당한 사람
       createdAt: Date.now(),
       updatedAt: Date.now(),
     });
 
-    const content = `${user.displayName}님이 팔로우하기 시작했습니다.`;
-    await addDoc(collection(db, "alarm"), {
-      userId: data.targetId, // 팔로우 당한 사람 uid
-      targetId: user.uid, // 팔로우한 사람
-      followId: followDoc.id,
-      content: content,
-      isChecked: false,
-      createdAt: Date.now(),
-    });
+    if (user.uid !== data.user.id) {
+      const content = `${user.displayName}님이 팔로우하기 시작했습니다.`;
+      await addDoc(collection(db, "alarm"), {
+        userId: data.user.id, // 팔로우 당한 사람 uid
+        targetId: user.uid, // 팔로우한 사람
+        followId: followDoc.id,
+        content: content,
+        isChecked: false,
+        createdAt: Date.now(),
+      });
+    }
   };
 
   return (
@@ -105,3 +106,5 @@ export default function FollowList({ ...data }) {
     </div>
   );
 }
+
+export default memo(FollowList);

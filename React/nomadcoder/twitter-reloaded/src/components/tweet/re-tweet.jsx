@@ -10,7 +10,7 @@ import {
 } from "firebase/firestore";
 import { auth, db, storage } from "../../firebase";
 import "./tweet.css";
-import { useEffect, useState } from "react";
+import { memo, useCallback, useEffect, useState } from "react";
 import { IconButton, Menu, MenuItem } from "@mui/material";
 import MoreVertIcon from "@mui/icons-material/MoreVert";
 import EditTweetDialog from "./edit/edit-tweet-dialog";
@@ -21,8 +21,8 @@ import ReTweetDialog from "./retweet/tweet-retweet-dialog";
 import Tweet from "./tweet";
 import { useNavigate } from "react-router-dom";
 
-export default function ReTweet({ isReply, isLast, isRetweet, ...data }) {
-  const [isOpen, setIsOpen] = useState("");
+function ReTweet({ isReply, isLast, isRetweet, ...data }) {
+  const [isOpen, setIsOpen] = useState(false);
   const [isOpenReply, setIsOpenReply] = useState(false);
   const [isOpenReTweet, setIsOpenReTweet] = useState(false);
   const [anchorEl, setAnchorEl] = useState(null);
@@ -159,7 +159,7 @@ export default function ReTweet({ isReply, isLast, isRetweet, ...data }) {
   const onDelete = async () => {
     const ok = confirm("정말 글을 삭제하실건가요?");
     if (!ok) {
-      setIsOpen("");
+      setIsOpen(false);
       onClickCloseMenu();
       return;
     }
@@ -199,11 +199,11 @@ export default function ReTweet({ isReply, isLast, isRetweet, ...data }) {
     }
   };
 
-  const handleClose = () => {
-    setIsOpen("");
+  const handleClose = useCallback(() => {
+    setIsOpen(false);
     setIsOpenReply(false);
     setIsOpenReTweet(false);
-  };
+  }, []);
 
   const onClickMenu = (e) => {
     e.stopPropagation();
@@ -329,7 +329,7 @@ export default function ReTweet({ isReply, isLast, isRetweet, ...data }) {
                       vertical: "bottom",
                       horizontal: "left",
                     }}
-                    aria-hidden={!isOpen ? "false" : "true"}
+                    aria-hidden={!isOpen ? false : true}
                   >
                     <MenuItem
                       key={"edit"}
@@ -440,10 +440,13 @@ export default function ReTweet({ isReply, isLast, isRetweet, ...data }) {
           {data.retweet.count}
         </div>
       </div>
+      <EditTweetDialog isOpen={isOpen} handleClose={handleClose} {...data} />
       <EditTweetDialog
-        isOpen={isOpen === "edit"}
+        isOpen={isOpen}
         handleClose={handleClose}
-        {...data}
+        images={data.images}
+        id={data.id}
+        tweet={data.tweet}
       />
       <TweetReplyDialog
         isOpenReply={isOpenReply}
@@ -453,8 +456,14 @@ export default function ReTweet({ isReply, isLast, isRetweet, ...data }) {
       <ReTweetDialog
         isOpenReTweet={isOpenReTweet}
         handleClose={handleClose}
-        {...data}
+        userData={data.user}
+        tweet={data.tweet}
+        id={data.id}
+        createdAt={data.createdAt}
+        images={data.images}
       />
     </>
   );
 }
+
+export default memo(ReTweet);

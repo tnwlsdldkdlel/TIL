@@ -1,7 +1,7 @@
 import { Backdrop, CircularProgress } from "@mui/material";
-import { useEffect, useState } from "react";
+import { memo, useEffect, useState } from "react";
 
-export default function BackDrop({ isLoading }) {
+function BackDrop({ isLoading }) {
   const [open, setOpen] = useState(isLoading);
 
   useEffect(() => {
@@ -22,3 +22,5 @@ export default function BackDrop({ isLoading }) {
     </Backdrop>
   );
 }
+
+export default memo(BackDrop);

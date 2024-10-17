@@ -1,14 +1,9 @@
-import { useState } from "react";
+import { memo, useState } from "react";
 import { auth, db } from "../../../firebase";
 import "../tweet.css";
 import { addDoc, collection } from "firebase/firestore";
 
-export default function PostTweetReplyForm({
-  tweetId,
-  userId,
-  tweet,
-  getData,
-}) {
+function PostTweetReplyForm({ tweetId, userId, tweet, getData }) {
   const [input, setInput] = useState("");
   const user = auth.currentUser;
 
@@ -70,3 +65,5 @@ export default function PostTweetReplyForm({
     </form>
   );
 }
+
+export default memo(PostTweetReplyForm);

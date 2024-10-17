@@ -1,4 +1,4 @@
-import { useEffect, useState } from "react";
+import { memo, useEffect, useState } from "react";
 import "./follower.css";
 import FollowList from "./follow-list";
 import {
@@ -9,11 +9,12 @@ import {
   startAt,
   endAt,
   orderBy,
+  onSnapshot,
 } from "firebase/firestore";
 import { auth, db } from "../../firebase";
 import { useLocation } from "react-router-dom";
 
-export default function Follower() {
+function Follower() {
   const location = useLocation();
   const { stateTab, userId } = location.state || {};
   const [tab, setTab] = useState(stateTab || "follower");
@@ -41,108 +42,124 @@ export default function Follower() {
     getFollowList(tab);
   };
 
-  const getFollowList = async (target, search) => {
+  const getFollowList = (target, search) => {
     let uid = userId ? userId : user.uid;
 
-    // 팔로워 : 나`를` 팔로우하는 사람들 => 내가 targetId
+    // 팔로워 : 나를 팔로우하는 사람들 => 내가 targetId
     if (target === "follower") {
       const followerQuery = query(
         collection(db, "follow"),
         where("targetId", "==", uid)
       );
 
-      const followerSnapshot = await getDocs(followerQuery);
-      let follwerList = [];
-      for (const item of followerSnapshot.docs) {
-        const followerData = item.data();
-        const userId = followerData.userId;
+      const unsubscribe = onSnapshot(
+        followerQuery,
+        async (followerSnapshot) => {
+          let followerList = [];
 
-        let userQuery = query(
-          collection(db, "user"),
-          where("id", "==", userId)
-        );
+          for (const item of followerSnapshot.docs) {
+            const followerData = item.data();
+            const userId = followerData.userId;
 
-        if (search) {
-          userQuery = query(
-            collection(db, "user"),
-            where("id", "==", userId),
-            orderBy("name"),
-            startAt(search),
-            endAt(search + "\uf8ff")
-          );
+            let userQuery = query(
+              collection(db, "user"),
+              where("id", "==", userId)
+            );
+
+            if (search) {
+              userQuery = query(
+                collection(db, "user"),
+                where("id", "==", userId),
+                orderBy("name"),
+                startAt(search),
+                endAt(search + "\uf8ff")
+              );
+            }
+
+            const userSnapshot = await getDocs(userQuery);
+            const userData = userSnapshot.docs[0]?.data();
+
+            // 맞팔로우 여부 확인
+            const followingQuery = query(
+              collection(db, "follow"),
+              where("userId", "==", uid),
+              where("targetId", "==", userId)
+            );
+
+            const followingSnapshot = await getDocs(followingQuery);
+            const isFollowing = followingSnapshot.docs.length !== 0;
+
+            if (userData) {
+              followerData.id = item.id;
+              followerData.isFollowing = isFollowing;
+              followerData.user = {
+                id: userId,
+                photo: userData.photo,
+                name: userData.name,
+              };
+
+              followerList.push(followerData);
+            }
+          }
+
+          setList(followerList);
         }
+      );
 
-        const userSnapshot = await getDocs(userQuery);
-        const userData = userSnapshot.docs[0]?.data();
-
-        // 맞팔로우되어있는지 확인
-        const followingQuery = query(
-          collection(db, "follow"),
-          where("userId", "==", uid),
-          where("targetId", "==", userId)
-        );
-
-        const followingSnapshot = await getDocs(followingQuery);
-        const isFollowing = followingSnapshot.docs.length == 0 ? false : true;
-
-        if (userData) {
-          followerData.id = item.id;
-          followerData.isFollowing = isFollowing;
-          followerData.user = {
-            id: userId,
-            photo: userData.photo,
-            name: userData.name,
-          };
-
-          follwerList.push(followerData);
-        }
-      }
-
-      setList(follwerList);
+      // 필요 시 구독 해제를 위한 unsubscribe 함수 반환
+      return unsubscribe;
     } else {
-      // 팔로잉 : 내`가` 팔로우하는 사람들 => 내가 userId
+      // 팔로잉 : 내가 팔로우하는 사람들 => 내가 userId
       const followerQuery = query(
         collection(db, "follow"),
         where("userId", "==", uid)
       );
-      const followerSnapshot = await getDocs(followerQuery);
-      let follwerList = [];
-      for (const item of followerSnapshot.docs) {
-        const followerData = item.data();
-        const targetId = followerData.targetId;
 
-        let userQuery = query(
-          collection(db, "user"),
-          where("id", "==", targetId)
-        );
+      const unsubscribe = onSnapshot(
+        followerQuery,
+        async (followerSnapshot) => {
+          let followerList = [];
 
-        if (search) {
-          userQuery = query(
-            collection(db, "user"),
-            where("id", "==", targetId),
-            orderBy("name"),
-            startAt(search),
-            endAt(search + "\uf8ff")
-          );
+          for (const item of followerSnapshot.docs) {
+            const followerData = item.data();
+            const targetId = followerData.targetId;
+
+            let userQuery = query(
+              collection(db, "user"),
+              where("id", "==", targetId)
+            );
+
+            if (search) {
+              userQuery = query(
+                collection(db, "user"),
+                where("id", "==", targetId),
+                orderBy("name"),
+                startAt(search),
+                endAt(search + "\uf8ff")
+              );
+            }
+
+            const userSnapshot = await getDocs(userQuery);
+            const userData = userSnapshot.docs[0]?.data();
+
+            if (userData) {
+              followerData.isFollowing = true;
+              followerData.id = item.id;
+              followerData.user = {
+                id: targetId,
+                photo: userData.photo,
+                name: userData.name,
+              };
+
+              followerList.push(followerData);
+            }
+          }
+
+          setList(followerList);
         }
+      );
 
-        const userSnapshot = await getDocs(userQuery);
-        const userData = userSnapshot.docs[0]?.data();
-
-        if (userData) {
-          followerData.isFollowing = true;
-          followerData.id = item.id;
-          followerData.user = {
-            id: targetId,
-            photo: userData.photo,
-            name: userData.name,
-          };
-
-          follwerList.push(followerData);
-        }
-      }
-
-      setList(follwerList);
+      return unsubscribe;
     }
   };
 
@@ -217,3 +234,5 @@ export default function Follower() {
     </div>
   );
 }
+
+export default memo(Follower);

@@ -1,8 +1,9 @@
 import { Box, IconButton } from "@mui/material";
 import Slider from "react-slick/lib/slider";
 import CloseIcon from "@mui/icons-material/Close";
+import { memo } from "react";
 
-export default function ImageSlider({ clieckRemoveImage, images, isEdit }) {
+function ImageSlider({ clieckRemoveImage, images, isEdit }) {
   const settings = {
     slidesToShow: 1.6,
     slidesToScroll: 1,
@@ -42,3 +43,5 @@ export default function ImageSlider({ clieckRemoveImage, images, isEdit }) {
     </Box>
   );
 }
+
+export default memo(ImageSlider);

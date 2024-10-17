@@ -1,6 +1,6 @@
 import { Dialog, DialogTitle } from "@mui/material";
 import TweetReply from "./tweet-reply";
-import { useEffect, useState } from "react";
+import { memo, useCallback, useEffect, useState } from "react";
 import {
   collection,
   getDocs,
@@ -13,18 +13,14 @@ import { db } from "../../../firebase";
 import PostTweetReplyForm from "./post-tweet-reply-form";
 import Tweet from "../tweet";
 
-export default function TweetReplyDialog({
-  isOpenReply,
-  handleClose,
-  ...data
-}) {
+function TweetReplyDialog({ isOpenReply, handleClose, ...data }) {
   const [replies, setReplies] = useState([]);
 
   useEffect(() => {
     getData();
   }, [data.id]);
 
-  const getData = async () => {
+  const getData = useCallback(async () => {
     if (!data.id) return;
     delete data.username;
 
@@ -44,7 +40,7 @@ export default function TweetReplyDialog({
         ...replyData,
         id: replyId,
         like: { isLiked: false, count: 0 },
-        user: { id: replyData.userId, name: "", photo: "" }, // 초기값 설정
+        user: { id: replyData.userId, name: "", photo: "" },
       };
     });
 
@@ -56,7 +52,6 @@ export default function TweetReplyDialog({
         where("replyId", "==", reply.id)
       );
 
-      // 조아요 업데이트
       onSnapshot(likesQuery, (likeSnapshot) => {
         const likeCount = likeSnapshot.docs.length;
         let likeId = 0;
@@ -106,7 +101,7 @@ export default function TweetReplyDialog({
         })
       );
     });
-  };
+  }, [data.id]);
 
   return (
     <Dialog
@@ -157,7 +152,11 @@ export default function TweetReplyDialog({
                   isLast={index === replies.length - 1}
                   userId={data.user.id}
                   tweetId={data.id}
-                  {...reply}
+                  like={reply.like}
+                  id={reply.id}
+                  content={reply.reply}
+                  userData={reply.user}
+                  createdAt={reply.createdAt}
                 />
               );
             })
@@ -179,3 +178,5 @@ export default function TweetReplyDialog({
     </Dialog>
   );
 }
+
+export default memo(TweetReplyDialog);

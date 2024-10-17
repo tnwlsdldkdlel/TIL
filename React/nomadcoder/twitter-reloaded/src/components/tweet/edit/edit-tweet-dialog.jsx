@@ -3,9 +3,9 @@ import DialogContent from "@mui/material/DialogContent";
 import DialogTitle from "@mui/material/DialogTitle";
 import "../tweet.css";
 import EditTweetForm from "./edit-tweet-form";
-import { Fragment } from "react";
+import { Fragment, memo } from "react";
 
-export default function EditTweetDialog({ isOpen, handleClose, ...data }) {
+function EditTweetDialog({ isOpen, handleClose, images, id, tweet }) {
   return (
     <Fragment>
       <Dialog
@@ -45,9 +45,16 @@ export default function EditTweetDialog({ isOpen, handleClose, ...data }) {
           </div>
         </DialogTitle>
         <DialogContent className="scrollable">
-          <EditTweetForm {...data} handleClose={handleClose}></EditTweetForm>
+          <EditTweetForm
+            tweet={tweet}
+            prevImages={images}
+            id={id}
+            handleClose={handleClose}
+          ></EditTweetForm>
         </DialogContent>
       </Dialog>
     </Fragment>
   );
 }
+
+export default memo(EditTweetDialog);

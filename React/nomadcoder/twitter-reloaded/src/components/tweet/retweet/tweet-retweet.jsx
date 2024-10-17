@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { memo, useState } from "react";
 import { timeAgo } from "../../../common/time-ago";
 import { auth, db } from "../../../firebase";
 import { IconButton, Menu, MenuItem } from "@mui/material";
@@ -13,7 +13,7 @@ import {
   where,
 } from "firebase/firestore";
 
-export default function TweetReply({ isLast, ...reply }) {
+function TweetReply({ isLast, ...reply }) {
   const user = auth.currentUser;
   const [anchorEl, setAnchorEl] = useState(null);
   const isMenuOpen = Boolean(anchorEl);
@@ -202,3 +202,5 @@ export default function TweetReply({ isLast, ...reply }) {
     </>
   );
 }
+
+export default memo(TweetReply);

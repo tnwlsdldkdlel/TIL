@@ -1,7 +1,7 @@
 import { Alert, Box, Snackbar } from "@mui/material";
-import { useEffect, useState } from "react";
+import { memo, useEffect, useState } from "react";
 
-export default function SnackBar({ result, message }) {
+function SnackBar({ result, message }) {
   const [open, setOpen] = useState(result);
 
   useEffect(() => {
@@ -48,3 +48,5 @@ export default function SnackBar({ result, message }) {
     </Box>
   );
 }
+
+export default memo(SnackBar);

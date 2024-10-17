@@ -1,6 +1,7 @@
+import { memo } from "react";
 import "./post-tweet-form.css";
 
-export default function PostTweetForm({ onSubmit, onChange, ...input }) {
+function PostTweetForm({ onSubmit, onChange, tweet }) {
   return (
     <form className="post-tweet-form" onSubmit={onSubmit}>
       <textarea
@@ -9,7 +10,7 @@ export default function PostTweetForm({ onSubmit, onChange, ...input }) {
         className="text-area"
         placeholder="무슨 일이 일어나고 있나요?"
         name="tweet"
-        value={input.tweet}
+        value={tweet}
         onChange={onChange}
       ></textarea>
       <label className="file-btn" htmlFor="file">
@@ -33,3 +34,5 @@ export default function PostTweetForm({ onSubmit, onChange, ...input }) {
     </form>
   );
 }
+
+export default memo(PostTweetForm);

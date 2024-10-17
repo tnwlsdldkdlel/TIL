@@ -1,4 +1,6 @@
-export default function RetweetForm({ retweet, onChange }) {
+import { memo } from "react";
+
+function RetweetForm({ retweet, onChange }) {
   return (
     <>
       <form className="post-tweet-form" style={{ marginBottom: "5px" }}>
@@ -15,3 +17,5 @@ export default function RetweetForm({ retweet, onChange }) {
     </>
   );
 }
+
+export default memo(RetweetForm);

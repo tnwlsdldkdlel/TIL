@@ -2,13 +2,9 @@ import { Dialog, DialogTitle } from "@mui/material";
 import "./follower.css";
 import { deleteDoc, doc } from "firebase/firestore";
 import { db } from "../../firebase";
+import { memo } from "react";
 
-export default function FollowRemoveDialog({
-  isOpen,
-  handleClose,
-  followId,
-  ...user
-}) {
+function FollowRemoveDialog({ isOpen, handleClose, followId, ...user }) {
   const onClickRemoveFollow = async () => {
     await deleteDoc(doc(db, "follow", followId));
     handleClose();
@@ -75,3 +71,5 @@ export default function FollowRemoveDialog({
     </Dialog>
   );
 }
+
+export default memo(FollowRemoveDialog);

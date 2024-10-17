@@ -1,50 +1,50 @@
 import { Dialog, DialogTitle } from "@mui/material";
-import Tweet from "../tweet";
-import { useState } from "react";
+import { memo, useCallback, useState } from "react";
 import RetweetForm from "./tweet-retweet-form";
 import { auth, db } from "../../../firebase";
 import { addDoc, collection } from "firebase/firestore";
+import RetweetContent from "./retweet-content";
 
-export default function ReTweetDialog({ isOpenReTweet, handleClose, ...data }) {
+function ReTweetDialog({
+  isOpenReTweet,
+  handleClose,
+  userData,
+  tweet,
+  id,
+  createdAt,
+  images,
+}) {
   const [retweet, setRetweet] = useState();
-  const [isLoading, setIsLoading] = useState();
   const user = auth.currentUser;
 
-  const onChange = (e) => {
+  const onChange = useCallback((e) => {
     setRetweet(e.target.value);
-  };
+  }, []);
 
   const onSubmit = async (e) => {
     e.preventDefault();
 
-    if (
-      !user ||
-      isLoading ||
-      retweet === "" ||
-      retweet.length > retweet.maxLength
-    )
-      return;
+    if (!user || retweet === "" || retweet.length > retweet.maxLength) return;
 
     try {
-      setIsLoading(true);
       await addDoc(collection(db, "tweets"), {
         tweet: retweet,
         createdAt: Date.now(),
         updatedAt: Date.now(),
         userId: user.uid,
-        retweetId: data.id,
+        retweetId: id,
       });
 
       // 알람
-      if (data.user.id !== user.uid) {
+      if (userData.id !== user.uid) {
         const content = `${user.displayName}님이 ${
-          data.tweet.length > 10 ? data.tweet.substr(0, 10) + "..." : data.tweet
+          tweet.length > 10 ? tweet.substr(0, 10) + "..." : tweet
         }글을 리포스팅했습니다.`;
         await addDoc(collection(db, "alarm"), {
-          userId: data.user.id, // 리포스팅 당한 사람 uid
+          userId: userData.id, // 리포스팅 당한 사람 uid
           targetId: user.uid, // 리포스팅한 사람 uid
           content: content,
-          tweetId: data.id,
+          tweetId: id,
           isChecked: false,
           createdAt: Date.now(),
         });
@@ -53,13 +53,26 @@ export default function ReTweetDialog({ isOpenReTweet, handleClose, ...data }) {
       handleClose();
     } catch (error) {
       console.log(error);
-    } finally {
-      setIsLoading(false);
     }
   };
 
   return (
-    <Dialog open={isOpenReTweet} onClose={handleClose}>
+    <Dialog
+      open={isOpenReTweet}
+      onClose={handleClose}
+      PaperProps={{
+        sx: {
+          backgroundColor: "black",
+          border: "1px solid white",
+          borderRadius: "20px",
+          resize: "none",
+          width: "730px",
+          height: "fit-content",
+          color: "white",
+          maxWidth: "730px",
+        },
+      }}
+    >
       <DialogTitle className="reply-dialog-title">
         <div className="info">리포스팅</div>
         <div className="close-btn" onClick={handleClose}>
@@ -80,7 +93,12 @@ export default function ReTweetDialog({ isOpenReTweet, handleClose, ...data }) {
       <div className="retweet-dialog-content scrollable">
         <div className="content">
           <RetweetForm retweet={retweet} onChange={onChange} />
-          <Tweet isRetweet={true} isReply={true} {...data} />
+          <RetweetContent
+            user={userData}
+            createdAt={createdAt}
+            tweet={tweet}
+            images={images}
+          />
         </div>
         <div className="btn">
           <input
@@ -94,3 +112,5 @@ export default function ReTweetDialog({ isOpenReTweet, handleClose, ...data }) {
     </Dialog>
   );
 }
+
+export default memo(ReTweetDialog);

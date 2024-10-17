@@ -9,7 +9,7 @@ import {
 } from "firebase/firestore";
 import { auth, db, storage } from "../../firebase";
 import "./tweet.css";
-import { useState } from "react";
+import { memo, useCallback, useState } from "react";
 import { IconButton, Menu, MenuItem } from "@mui/material";
 import MoreVertIcon from "@mui/icons-material/MoreVert";
 import EditTweetDialog from "./edit/edit-tweet-dialog";
@@ -20,14 +20,8 @@ import ReTweetDialog from "./retweet/tweet-retweet-dialog";
 import { useNavigate } from "react-router-dom";
 import ImageSlider from "../common/image-slider";
 
-export default function Tweet({
-  isReply,
-  isLast,
-  isRetweet,
-  fetchInitialTweets,
-  ...data
-}) {
-  const [isOpen, setIsOpen] = useState("");
+function Tweet({ isReply, isLast, isRetweet, ...data }) {
+  const [isOpen, setIsOpen] = useState(false);
   const [isOpenReply, setIsOpenReply] = useState(false);
   const [isOpenReTweet, setIsOpenReTweet] = useState(false);
   const [anchorEl, setAnchorEl] = useState(null);
@@ -38,7 +32,7 @@ export default function Tweet({
   const onDelete = async () => {
     const ok = confirm("정말로 삭제하실건가요?");
     if (!ok) {
-      setIsOpen("");
+      setIsOpen(false);
       onClickCloseMenu();
       return;
     }
@@ -105,13 +99,12 @@ export default function Tweet({
     }
   };
 
-  const handleClose = () => {
-    setIsOpen("");
+  const handleClose = useCallback(() => {
+    setIsOpen(false);
     setAnchorEl(null);
     setIsOpenReply(false);
     setIsOpenReTweet(false);
-    fetchInitialTweets();
-  };
+  }, []);
 
   const onClickMenu = (e) => {
     e.stopPropagation();
@@ -125,8 +118,8 @@ export default function Tweet({
     setAnchorEl(null);
   };
 
-  const onClickMenuItem = (target) => {
-    setIsOpen(target);
+  const onClickMenuItem = () => {
+    setIsOpen(true);
   };
 
   const onClickLike = async (e) => {
@@ -268,7 +261,7 @@ export default function Tweet({
                   >
                     <MenuItem
                       key={"edit"}
-                      onClick={() => onClickMenuItem("edit")}
+                      onClick={onClickMenuItem}
                       disableRipple
                     >
                       Edit
@@ -386,9 +379,11 @@ export default function Tweet({
         )}
       </div>
       <EditTweetDialog
-        isOpen={isOpen === "edit"}
+        isOpen={isOpen}
         handleClose={handleClose}
-        {...data}
+        images={data.images}
+        id={data.id}
+        tweet={data.tweet}
       />
       <TweetReplyDialog
         isOpenReply={isOpenReply}
@@ -398,8 +393,14 @@ export default function Tweet({
       <ReTweetDialog
         isOpenReTweet={isOpenReTweet}
         handleClose={handleClose}
-        {...data}
+        userData={data.user}
+        tweet={data.tweet}
+        id={data.id}
+        createdAt={data.createdAt}
+        images={data.images}
       />
     </>
   );
 }
+
+export default memo(Tweet);
