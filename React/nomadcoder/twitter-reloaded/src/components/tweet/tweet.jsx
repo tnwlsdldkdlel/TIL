@@ -9,7 +9,7 @@ import {
 } from "firebase/firestore";
 import { auth, db, storage } from "../../firebase";
 import "./tweet.css";
-import { useEffect, useState } from "react";
+import { useState } from "react";
 import { IconButton, Menu, MenuItem } from "@mui/material";
 import MoreVertIcon from "@mui/icons-material/MoreVert";
 import EditTweetDialog from "./edit/edit-tweet-dialog";
@@ -291,7 +291,7 @@ export default function Tweet({
             </div>
           )}
         </div>
-        <div className="middle" onClick={isReply ? "" : onClickRelpyDialog}>
+        <div className="middle" onClick={isReply ? null : onClickRelpyDialog}>
           <p className="payload">{data.tweet}</p>
           {data.images && data.images.length > 0 ? (
             <div className="image">
