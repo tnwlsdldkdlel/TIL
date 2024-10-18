@@ -11,8 +11,9 @@ import {
 import { timeAgo } from "../../../common/time-ago";
 import "./alarm.css";
 import { auth, db } from "../../../firebase";
+import { memo } from "react";
 
-export default function FollowAlarm({ ...data }) {
+function FollowAlarm({ ...data }) {
   const user = auth.currentUser;
 
   const onClickFollow = async () => {
@@ -98,3 +99,5 @@ export default function FollowAlarm({ ...data }) {
     </div>
   );
 }
+
+export default memo(FollowAlarm);

@@ -1,7 +1,7 @@
-import { Outlet, useLocation, useNavigate } from "react-router-dom";
+import { Outlet, useNavigate } from "react-router-dom";
 import "./layout.css";
 import { auth, db } from "../../firebase";
-import { useEffect, useState } from "react";
+import { useCallback, useEffect, useState } from "react";
 import {
   collection,
   getDocs,
@@ -61,12 +61,12 @@ export default function Layout() {
     setAlarmOpen(true);
   };
 
-  const handleClose = () => {
+  const handleClose = useCallback(() => {
     setAlarmOpen(false);
     setDetailOpen(false);
-  };
+  }, []);
 
-  const onClickDetail = async (e) => {
+  const onClickDetail = useCallback(async (e) => {
     const tweetId = e.target.parentNode.parentNode.className.replace(
       "alarm_",
       ""
@@ -74,7 +74,7 @@ export default function Layout() {
 
     handleClose();
     await getTweet(tweetId);
-  };
+  }, []);
 
   const getTweet = async (tweetId) => {
     const tweetQuery = query(

@@ -1,6 +1,6 @@
 import "./profile.css";
 import { auth, db } from "../firebase";
-import { useEffect, useRef, useState } from "react";
+import { memo, useCallback, useEffect, useRef, useState } from "react";
 import {
   addDoc,
   collection,
@@ -16,17 +16,20 @@ import Tweet from "../components/tweet/tweet";
 import ReTweet from "../components/tweet/re-tweet";
 import { useLocation, useNavigate } from "react-router-dom";
 import BackDrop from "../components/common/loading";
+import { debounce } from "lodash";
 
-export default function Profile() {
+function Profile() {
   const user = auth.currentUser;
   const navigate = useNavigate();
   const location = useLocation();
   const { userId } = location.state || {};
   const [info, setInfo] = useState({});
   const [tweet, setTweet] = useState([]);
-  const [tweetCount, setTweetCount] = useState(0);
-  const [followingCount, setFollowingCount] = useState(0);
-  const [followerCount, setFollwerCount] = useState(0);
+  const [count, setCount] = useState({
+    tweet: 0,
+    following: 0,
+    follower: 0,
+  });
   const [isFollow, setIsFollow] = useState(false);
   const scrollableDivRef = useRef(null);
   const PAGE = 20;
@@ -43,7 +46,6 @@ export default function Profile() {
   }
 
   useEffect(() => {
-    getTweetCount();
     fetchInitialTweets(false);
     getUserInfo();
 
@@ -57,9 +59,13 @@ export default function Profile() {
         scrollableDiv.removeEventListener("scroll", handleScroll);
       }
     };
-  }, [userId]);
+  }, []);
 
-  const getUserInfo = async () => {
+  useEffect(() => {
+    getTweetCount();
+  }, [user.uid]);
+
+  const getUserInfo = useCallback(async () => {
     const infoQuery = query(collection(db, "user"), where("id", "==", uid));
     const snapshot = await getDocs(infoQuery);
 
@@ -73,7 +79,7 @@ export default function Profile() {
         photo: infoData.photo,
       });
     });
-  };
+  }, []);
 
   const getTweetCount = async () => {
     const tweetsQuery = query(
@@ -82,7 +88,7 @@ export default function Profile() {
     );
 
     const snapshot = await getDocs(tweetsQuery);
-    setTweetCount(snapshot.docs.length);
+    setCount({ ...count, tweet: snapshot.docs.length });
   };
 
   const fetchInitialTweets = async (isScrolled) => {
@@ -105,7 +111,6 @@ export default function Profile() {
         startAfter(lastVisible)
       );
     }
-
     try {
       const snapshot = await getDocs(tweetsQuery);
 
@@ -263,7 +268,7 @@ export default function Profile() {
       );
 
       onSnapshot(followerQuery, (snapshot) => {
-        setFollwerCount(snapshot.docs.length);
+        setCount({ ...count, follower: snapshot.docs.length });
       });
 
       const followingQuery = query(
@@ -272,7 +277,7 @@ export default function Profile() {
       );
 
       onSnapshot(followingQuery, (snapshot) => {
-        setFollowingCount(snapshot.docs.length);
+        setCount({ ...count, following: snapshot.docs.length });
       });
 
       // `내가` 상대방을 팔로우했는지 확인
@@ -300,21 +305,16 @@ export default function Profile() {
     }
   };
 
-  const handleScroll = () => {
+  const handleScroll = debounce(() => {
     if (scrollableDivRef.current) {
       const scrollTop = scrollableDivRef.current.scrollTop;
 
       if (scrollTop - lastScrollTop >= 1900) {
         lastScrollTop = scrollTop;
-
-        const unsubscribe = fetchInitialTweets(true);
-
-        return () => {
-          unsubscribe();
-        };
+        fetchInitialTweets(true);
       }
     }
-  };
+  }, 300); // 300ms 동안 연속 호출 방지
 
   const onClickProfile = () => {
     navigate(`/profile/edit`);
@@ -366,7 +366,7 @@ export default function Profile() {
         </label>
         <div className="count">
           <div className="tweet-count">
-            <div className="value">{tweetCount}</div>
+            <div className="value">{count.tweet}</div>
             <div className="key">게시물</div>
           </div>
           <div
@@ -379,7 +379,7 @@ export default function Profile() {
               })
             }
           >
-            <div className="value">{followerCount}</div>
+            <div className="value">{count.follower}</div>
             <div className="key">팔로워</div>
           </div>
           <div
@@ -393,7 +393,7 @@ export default function Profile() {
               })
             }
           >
-            <div className="value">{followingCount}</div>
+            <div className="value">{count.following}</div>
             <div className="key">팔로잉</div>
           </div>
         </div>
@@ -436,3 +436,5 @@ export default function Profile() {
     </div>
   );
 }
+
+export default memo(Profile);

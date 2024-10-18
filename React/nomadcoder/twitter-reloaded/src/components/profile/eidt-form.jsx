@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { memo, useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { auth, db } from "../../firebase";
 import {
@@ -17,7 +17,7 @@ import {
 } from "firebase/firestore";
 import { FirebaseError } from "firebase/app";
 
-export default function EditForm() {
+function EditForm() {
   const user = auth.currentUser;
   const navigate = useNavigate();
   const [input, setInput] = useState({
@@ -177,3 +177,5 @@ export default function EditForm() {
     </form>
   );
 }
+
+export default memo(EditForm);

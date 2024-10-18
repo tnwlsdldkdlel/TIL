@@ -18,7 +18,7 @@ function TweetReplyDialog({ isOpenReply, handleClose, ...data }) {
 
   useEffect(() => {
     getData();
-  }, [data.id]);
+  }, [isOpenReply]);
 
   const getData = useCallback(async () => {
     if (!data.id) return;

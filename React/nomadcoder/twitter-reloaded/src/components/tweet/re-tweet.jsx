@@ -296,8 +296,8 @@ function ReTweet({ isReply, isLast, isRetweet, ...data }) {
                     className="btn"
                     aria-label="more"
                     id="long-button"
-                    aria-controls={open ? "long-menu" : undefined}
-                    aria-expanded={open ? "true" : undefined}
+                    aria-controls={isOpen ? "long-menu" : undefined}
+                    aria-expanded={isOpen ? "true" : undefined}
                     aria-haspopup="true"
                   >
                     <MoreVertIcon />
@@ -440,7 +440,6 @@ function ReTweet({ isReply, isLast, isRetweet, ...data }) {
           {data.retweet.count}
         </div>
       </div>
-      <EditTweetDialog isOpen={isOpen} handleClose={handleClose} {...data} />
       <EditTweetDialog
         isOpen={isOpen}
         handleClose={handleClose}

@@ -106,21 +106,21 @@ function Tweet({ isReply, isLast, isRetweet, ...data }) {
     setIsOpenReTweet(false);
   }, []);
 
-  const onClickMenu = (e) => {
+  const onClickMenu = useCallback((e) => {
     e.stopPropagation();
     setAnchorEl(e.currentTarget);
-  };
+  }, []);
 
-  const onClickCloseMenu = (e) => {
+  const onClickCloseMenu = useCallback((e) => {
     if (e) {
       e.stopPropagation();
     }
     setAnchorEl(null);
-  };
+  }, []);
 
-  const onClickMenuItem = () => {
+  const onClickMenuItem = useCallback(() => {
     setIsOpen(true);
-  };
+  }, []);
 
   const onClickLike = async (e) => {
     e.stopPropagation();
@@ -162,20 +162,20 @@ function Tweet({ isReply, isLast, isRetweet, ...data }) {
     }
   };
 
-  const onClickRelpyDialog = (e) => {
+  const onClickRelpyDialog = useCallback((e) => {
     e.stopPropagation();
     setIsOpenReply(true);
-  };
+  }, []);
 
-  const onClickReTweetDialog = (e) => {
+  const onClickReTweetDialog = useCallback((e) => {
     e.stopPropagation();
     setIsOpenReTweet(true);
-  };
+  }, []);
 
-  const onClickUser = (e) => {
+  const onClickUser = useCallback((e) => {
     e.stopPropagation();
     navigate(`/profile`, { state: { userId: data.user.id } });
-  };
+  }, []);
 
   return (
     <>
@@ -224,8 +224,8 @@ function Tweet({ isReply, isLast, isRetweet, ...data }) {
                     className="btn"
                     aria-label="more"
                     id="long-button"
-                    aria-controls={open ? "long-menu" : undefined}
-                    aria-expanded={open ? "true" : undefined}
+                    aria-controls={isOpen ? "long-menu" : undefined}
+                    aria-expanded={isOpen ? "true" : undefined}
                     aria-haspopup="true"
                   >
                     <MoreVertIcon />

@@ -1,11 +1,11 @@
-import { useState } from "react";
+import { memo, useState } from "react";
 import { auth, storage } from "../../firebase";
 import "../../pages/profile.css";
 import { getDownloadURL, ref, uploadBytes } from "firebase/storage";
 import { updateProfile } from "firebase/auth";
 import EditForm from "./eidt-form";
 
-export default function ProfileEdit() {
+function ProfileEdit() {
   const user = auth.currentUser;
   const [avatar, setAvatar] = useState(user?.photoURL);
 
@@ -64,3 +64,5 @@ export default function ProfileEdit() {
     </div>
   );
 }
+
+export default memo(ProfileEdit);

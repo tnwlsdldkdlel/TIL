@@ -1,6 +1,6 @@
 import { Dialog, DialogContent, DialogTitle } from "@mui/material";
 import { differenceInCalendarDays } from "date-fns";
-import { Fragment, useEffect, useState } from "react";
+import { Fragment, memo, useEffect, useState } from "react";
 import { auth, db } from "../../../firebase";
 import {
   collection,
@@ -13,7 +13,7 @@ import {
 import Alarm from "./alarm";
 import FollowAlarm from "./follow-alarm";
 
-export default function AlarmDialog({ isOpen, handleClose, onClickDetail }) {
+function AlarmDialog({ isOpen, handleClose, onClickDetail }) {
   const [alarms, setAlarms] = useState({
     today: [],
     yesterday: [],
@@ -358,3 +358,5 @@ export default function AlarmDialog({ isOpen, handleClose, onClickDetail }) {
     </Fragment>
   );
 }
+
+export default memo(AlarmDialog);

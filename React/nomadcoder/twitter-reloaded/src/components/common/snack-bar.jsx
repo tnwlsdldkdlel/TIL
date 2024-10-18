@@ -1,5 +1,5 @@
 import { Alert, Box, Snackbar } from "@mui/material";
-import { memo, useEffect, useState } from "react";
+import { memo, useCallback, useEffect, useState } from "react";
 
 function SnackBar({ result, message }) {
   const [open, setOpen] = useState(result);
@@ -8,13 +8,13 @@ function SnackBar({ result, message }) {
     setOpen(result);
   }, [result]);
 
-  const handleClose = (event, reason) => {
+  const handleClose = useCallback((event, reason) => {
     if (reason === "clickaway") {
       return;
     }
 
     setOpen("");
-  };
+  }, []);
 
   return open === "fail" ? (
     <Box sx={{ width: 500 }}>

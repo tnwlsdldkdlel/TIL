@@ -1,7 +1,8 @@
+import { memo } from "react";
 import { timeAgo } from "../../../common/time-ago";
 import "./alarm.css";
 
-export default function Alarm({ onClickDetail, ...data }) {
+function Alarm({ onClickDetail, ...data }) {
   return (
     <div className={`alarm_${data.tweetId}`} onClick={onClickDetail}>
       <div className="left">
@@ -39,3 +40,5 @@ export default function Alarm({ onClickDetail, ...data }) {
     </div>
   );
 }
+
+export default memo(Alarm);

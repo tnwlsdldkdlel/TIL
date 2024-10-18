@@ -1,5 +1,5 @@
 import { Backdrop, CircularProgress } from "@mui/material";
-import { memo, useEffect, useState } from "react";
+import { memo, useCallback, useEffect, useState } from "react";
 
 function BackDrop({ isLoading }) {
   const [open, setOpen] = useState(isLoading);
@@ -8,9 +8,9 @@ function BackDrop({ isLoading }) {
     setOpen(isLoading);
   }, [isLoading]);
 
-  const handleClose = () => {
+  const handleClose = useCallback(() => {
     setOpen(false);
-  };
+  }, []);
 
   return (
     <Backdrop
