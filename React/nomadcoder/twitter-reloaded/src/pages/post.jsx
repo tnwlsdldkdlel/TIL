@@ -1,16 +1,15 @@
 import { useState } from "react";
 import PostTweetForm from "../components/tweet/edit/post-tweet-form";
-import { auth, db, storage } from "../firebase";
-import { addDoc, collection } from "firebase/firestore";
-import { getDownloadURL, ref, uploadBytes } from "firebase/storage";
+import { auth } from "../firebase";
 import "slick-carousel/slick/slick.css";
 import "slick-carousel/slick/slick-theme.css";
 import "./post.css";
 import SnackBar from "../components/common/snack-bar";
 import BackDrop from "../components/common/loading";
 import ImageSlider from "../components/common/image-slider";
-import { v4 as uuidv4 } from "uuid";
 import { useNavigate } from "react-router-dom";
+import { addTweet, addTweetImage } from "../api/tweetApi";
+import { uploadTweetImage } from "../storage/tweetStorage";
 
 export default function Post() {
   const [input, setInput] = useState({});
@@ -33,27 +32,11 @@ export default function Post() {
       return;
 
     try {
-      const doc = await addDoc(collection(db, "tweets"), {
-        tweet: input.tweet,
-        createdAt: Date.now(),
-        updatedAt: Date.now(),
-        userId: user.uid,
-      });
+      const doc = await addTweet(input);
 
       if (images.length > 0) {
-        images.forEach(async (image) => {
-          // storage 추가
-          const uuid = uuidv4();
-          const locationRef = ref(storage, `tweets/${doc.id}/${uuid}`);
-          const result = await uploadBytes(locationRef, image);
-          const url = await getDownloadURL(result.ref);
-
-          // db 추가
-          await addDoc(collection(db, "images"), {
-            tweetId: doc.id,
-            url: url,
-            createdAt: Date.now(),
-          });
+        uploadTweetImage(images, doc).then((uploadImages) => {
+          addTweetImage(doc, uploadImages);
         });
       }
 

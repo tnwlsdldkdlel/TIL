@@ -30,8 +30,7 @@ function Tweet({ isReply, isLast, isRetweet, ...data }) {
   const user = auth.currentUser;
 
   const onDelete = async () => {
-    const ok = confirm("정말로 삭제하실건가요?");
-    if (!ok) {
+    if (!confirm("정말로 삭제하실건가요?")) {
       setIsOpen(false);
       onClickCloseMenu();
       return;

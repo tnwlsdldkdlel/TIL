@@ -1,7 +1,8 @@
 import { Navigate } from "react-router-dom";
 import { auth } from "../../firebase";
+import { memo } from "react";
 
-export default function ProtectedRoute({ children }) {
+function ProtectedRoute({ children }) {
   const user = auth.currentUser;
 
   if (user === null) {
@@ -10,3 +11,5 @@ export default function ProtectedRoute({ children }) {
 
   return children;
 }
+
+export default memo(ProtectedRoute);
