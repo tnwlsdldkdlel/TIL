@@ -1,18 +1,16 @@
-import { memo, useEffect, useState } from "react";
+import { memo, useCallback, useEffect, useState } from "react";
 import "./follower.css";
 import FollowList from "./follow-list";
-import {
-  collection,
-  getDocs,
-  query,
-  where,
-  startAt,
-  endAt,
-  orderBy,
-  onSnapshot,
-} from "firebase/firestore";
-import { auth, db } from "../../firebase";
+import { auth } from "../../firebase";
 import { useLocation } from "react-router-dom";
+import {
+  getFollower,
+  getFollwing,
+  setfollow,
+  setUnfollow,
+} from "../../api/followerApi";
+import FollowListNotMe from "./follow-list-not-me";
+import BackDrop from "../common/loading";
 
 function Follower() {
   const location = useLocation();
@@ -20,10 +18,12 @@ function Follower() {
   const [tab, setTab] = useState(stateTab || "follower");
   const [search, setSearch] = useState("");
   const [list, setList] = useState([]);
+  const [isOpen, setOpen] = useState(false);
   const user = auth.currentUser;
+  const [isLoading, setIsLoading] = useState(false);
 
   useEffect(() => {
-    getFollowList("follower");
+    getFollowList(tab);
   }, []);
 
   const onClickTab = (e) => {
@@ -42,126 +42,42 @@ function Follower() {
     getFollowList(tab);
   };
 
-  const getFollowList = (target, search) => {
-    let uid = userId ? userId : user.uid;
-
+  const getFollowList = async (target, search) => {
+    setIsLoading(true);
     // 팔로워 : 나를 팔로우하는 사람들 => 내가 targetId
+    let uid = userId ? userId : user.id;
+
     if (target === "follower") {
-      const followerQuery = query(
-        collection(db, "follow"),
-        where("targetId", "==", uid)
-      );
-
-      const unsubscribe = onSnapshot(
-        followerQuery,
-        async (followerSnapshot) => {
-          let followerList = [];
-
-          for (const item of followerSnapshot.docs) {
-            const followerData = item.data();
-            const userId = followerData.userId;
-
-            let userQuery = query(
-              collection(db, "user"),
-              where("id", "==", userId)
-            );
-
-            if (search) {
-              userQuery = query(
-                collection(db, "user"),
-                where("id", "==", userId),
-                orderBy("name"),
-                startAt(search),
-                endAt(search + "\uf8ff")
-              );
-            }
-
-            const userSnapshot = await getDocs(userQuery);
-            const userData = userSnapshot.docs[0]?.data();
-
-            // 맞팔로우 여부 확인
-            const followingQuery = query(
-              collection(db, "follow"),
-              where("userId", "==", uid),
-              where("targetId", "==", userId)
-            );
-
-            const followingSnapshot = await getDocs(followingQuery);
-            const isFollowing = followingSnapshot.docs.length !== 0;
-
-            if (userData) {
-              followerData.id = item.id;
-              followerData.isFollowing = isFollowing;
-              followerData.user = {
-                id: userId,
-                photo: userData.photo,
-                name: userData.name,
-              };
-
-              followerList.push(followerData);
-            }
-          }
-
-          setList(followerList);
-        }
-      );
-
-      // 필요 시 구독 해제를 위한 unsubscribe 함수 반환
-      return unsubscribe;
+      const list = await getFollower(uid, search);
+      setList(list);
     } else {
       // 팔로잉 : 내가 팔로우하는 사람들 => 내가 userId
-      const followerQuery = query(
-        collection(db, "follow"),
-        where("userId", "==", uid)
-      );
-
-      const unsubscribe = onSnapshot(
-        followerQuery,
-        async (followerSnapshot) => {
-          let followerList = [];
-
-          for (const item of followerSnapshot.docs) {
-            const followerData = item.data();
-            const targetId = followerData.targetId;
-
-            let userQuery = query(
-              collection(db, "user"),
-              where("id", "==", targetId)
-            );
-
-            if (search) {
-              userQuery = query(
-                collection(db, "user"),
-                where("id", "==", targetId),
-                orderBy("name"),
-                startAt(search),
-                endAt(search + "\uf8ff")
-              );
-            }
-
-            const userSnapshot = await getDocs(userQuery);
-            const userData = userSnapshot.docs[0]?.data();
-
-            if (userData) {
-              followerData.isFollowing = true;
-              followerData.id = item.id;
-              followerData.user = {
-                id: targetId,
-                photo: userData.photo,
-                name: userData.name,
-              };
-
-              followerList.push(followerData);
-            }
-          }
-
-          setList(followerList);
-        }
-      );
-
-      return unsubscribe;
+      const list = await getFollwing(uid, search);
+      setList(list);
     }
+
+    setIsLoading(false);
   };
+
+  const onFollow = async (target) => {
+    await setfollow(target);
+    await getFollowList(tab);
+  };
+
+  const handleClose = useCallback(async () => setOpen(false), []);
+
+  const onClickRemoveFollow = useCallback(
+    async (followId) => {
+      await setUnfollow(followId);
+      await handleClose();
+      await getFollowList(tab);
+    },
+    [list]
+  );
+
+  const onClickMenu = useCallback(() => {
+    setOpen(true);
+  }, []);
 
   return (
     <div className="follower">
@@ -222,15 +138,27 @@ function Follower() {
         )}
       </div>
       <div className="content">
-        {list.length == 0 ? (
+        {list.length === 0 ? (
           <div className="empty">사용자를 찾을 수 없습니다.</div>
         ) : (
-          list.map((data) => {
-            return <FollowList key={data.id} {...data} />;
-          })
+          list.map((data) =>
+            (tab === "follower" && data.targetId === user.uid) ||
+            (tab === "following" && data.userId === user.uid) ? (
+              <FollowList
+                key={data.id}
+                isOpen={isOpen}
+                onClickMenu={onClickMenu}
+                onClickRemoveFollow={onClickRemoveFollow}
+                onFollow={onFollow}
+                {...data}
+              />
+            ) : (
+              <FollowListNotMe key={data.id} {...data} />
+            )
+          )
         )}
-        {}
       </div>
+      <BackDrop isLoading={isLoading}></BackDrop>
     </div>
   );
 }

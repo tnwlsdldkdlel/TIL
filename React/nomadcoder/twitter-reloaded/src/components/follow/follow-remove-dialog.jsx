@@ -1,20 +1,32 @@
 import { Dialog, DialogTitle } from "@mui/material";
 import "./follower.css";
-import { deleteDoc, doc } from "firebase/firestore";
-import { db } from "../../firebase";
 import { memo } from "react";
 
-function FollowRemoveDialog({ isOpen, handleClose, followId, ...user }) {
-  const onClickRemoveFollow = async () => {
-    await deleteDoc(doc(db, "follow", followId));
-    handleClose();
-  };
-
+function FollowRemoveDialog({
+  isOpen,
+  handleClose,
+  photo,
+  name,
+  onClickRemoveFollow,
+}) {
   return (
     <Dialog
       className="follow-remove-dialog"
       open={isOpen}
       onClose={handleClose}
+      PaperProps={{
+        sx: {
+          backgroundColor: "black",
+          border: "1px solid white",
+          borderRadius: "20px",
+          resize: "none",
+          width: "fit-content",
+          height: "fit-content",
+          color: "white",
+          maxWidth: "fit-content",
+        },
+      }}
+      s
     >
       <DialogTitle className="dialog-title">
         <div className="close-btn" onClick={handleClose}>
@@ -35,8 +47,8 @@ function FollowRemoveDialog({ isOpen, handleClose, followId, ...user }) {
         </div>
       </DialogTitle>
       <div className="content">
-        {user.photo ? (
-          <img className="photo" src={user.photo}></img>
+        {photo ? (
+          <img className="photo" src={photo}></img>
         ) : (
           <>
             <svg
@@ -57,7 +69,7 @@ function FollowRemoveDialog({ isOpen, handleClose, followId, ...user }) {
         )}
         <div style={{ fontWeight: "bolder" }}>팔로워를 삭제하시겠어요?</div>
         <div style={{ color: "#9e9c9c" }}>
-          {user.name}님은 팔로워 리스트에서 삭제된 사실을 알 수 없습니다.
+          {name}님은 팔로워 리스트에서 삭제된 사실을 알 수 없습니다.
         </div>
       </div>
       <div className="btn">

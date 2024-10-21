@@ -1,52 +1,21 @@
 import "./follower.css";
 import { IconButton } from "@mui/material";
 import MoreVertIcon from "@mui/icons-material/MoreVert";
-import { memo, useCallback, useState } from "react";
+import { memo } from "react";
 import FollowRemoveDialog from "./follow-remove-dialog";
 import { useNavigate } from "react-router-dom";
-import { addDoc, collection, doc, updateDoc } from "firebase/firestore";
-import { auth, db } from "../../firebase";
 
-function FollowList({ ...data }) {
-  const [isOpen, setOpen] = useState(false);
+function FollowList({
+  isOpen,
+  onFollow,
+  onClickMenu,
+  handleClose,
+  onClickRemoveFollow,
+  ...data
+}) {
   const navigate = useNavigate();
-  const user = auth.currentUser;
-
-  const onClickMenu = useCallback(() => {
-    setOpen(true);
-  }, []);
-
-  const handleClose = useCallback(() => setOpen(false), []);
-
   const onClickProfile = () => {
     navigate(`/profile`, { state: { userId: data.user.id } });
-  };
-
-  const onClickFollow = async () => {
-    const docRef = doc(db, "follow", data.id);
-
-    await updateDoc(docRef, {
-      updatedAt: Date.now(),
-    });
-
-    const followDoc = await addDoc(collection(db, "follow"), {
-      userId: user.uid, // 팔로우 건 사람
-      targetId: data.user.id, // 팔로우 당한 사람
-      createdAt: Date.now(),
-      updatedAt: Date.now(),
-    });
-
-    if (user.uid !== data.user.id) {
-      const content = `${user.displayName}님이 팔로우하기 시작했습니다.`;
-      await addDoc(collection(db, "alarm"), {
-        userId: data.user.id, // 팔로우 당한 사람 uid
-        targetId: user.uid, // 팔로우한 사람
-        followId: followDoc.id,
-        content: content,
-        isChecked: false,
-        createdAt: Date.now(),
-      });
-    }
   };
 
   return (
@@ -91,7 +60,7 @@ function FollowList({ ...data }) {
               </IconButton>
             </div>
           ) : (
-            <div className="follow-btn" onClick={onClickFollow}>
+            <div className="follow-btn" onClick={() => onFollow(data.user.id)}>
               팔로우
             </div>
           )}
@@ -100,8 +69,10 @@ function FollowList({ ...data }) {
       <FollowRemoveDialog
         isOpen={isOpen}
         handleClose={handleClose}
+        onClickRemoveFollow={() => onClickRemoveFollow(data.id)}
         followId={data.id}
-        {...data.user}
+        photo={data.user.photo}
+        name={data.user.name}
       />
     </div>
   );

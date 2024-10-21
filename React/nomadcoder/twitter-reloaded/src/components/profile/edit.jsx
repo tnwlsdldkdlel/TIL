@@ -1,26 +1,18 @@
 import { memo, useState } from "react";
-import { auth, storage } from "../../firebase";
+import { auth } from "../../firebase";
 import "../../pages/profile.css";
-import { getDownloadURL, ref, uploadBytes } from "firebase/storage";
-import { updateProfile } from "firebase/auth";
 import EditForm from "./eidt-form";
+import { setProfileImg } from "../../storage/userStorage";
+import { updateProfile } from "firebase/auth";
 
 function ProfileEdit() {
   const user = auth.currentUser;
   const [avatar, setAvatar] = useState(user?.photoURL);
 
   const onAvatarChange = async (e) => {
-    const { files } = e.target;
-
-    if (files && files.length === 1) {
-      const file = files[0];
-      const locationRef = ref(storage, `avatars/${user.uid}`);
-      const result = await uploadBytes(locationRef, file);
-      const url = await getDownloadURL(result.ref);
-
-      setAvatar(url);
-      await updateProfile(user, { photoURL: url });
-    }
+    const url = await setProfileImg(e.target);
+    setAvatar(url);
+    await updateProfile(user, { photoURL: url });
   };
 
   return (

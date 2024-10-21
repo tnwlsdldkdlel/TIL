@@ -1,26 +1,17 @@
-import {
-  addDoc,
-  collection,
-  deleteDoc,
-  doc,
-  getDocs,
-  query,
-  where,
-} from "firebase/firestore";
-import { auth, db, storage } from "../../firebase";
+import { auth } from "../../firebase";
 import "./tweet.css";
 import { memo, useCallback, useState } from "react";
 import { IconButton, Menu, MenuItem } from "@mui/material";
 import MoreVertIcon from "@mui/icons-material/MoreVert";
 import EditTweetDialog from "./edit/edit-tweet-dialog";
-import { deleteObject, ref } from "firebase/storage";
 import { timeAgo } from "../../common/time-ago";
 import TweetReplyDialog from "./reply/tweet-reply-dialog";
 import ReTweetDialog from "./retweet/tweet-retweet-dialog";
 import { useNavigate } from "react-router-dom";
 import ImageSlider from "../common/image-slider";
+import { likeTweet } from "../../api/tweetApi";
 
-function Tweet({ isReply, isLast, isRetweet, ...data }) {
+function Tweet({ isReply, isLast, isRetweet, clickDelete, ...data }) {
   const [isOpen, setIsOpen] = useState(false);
   const [isOpenReply, setIsOpenReply] = useState(false);
   const [isOpenReTweet, setIsOpenReTweet] = useState(false);
@@ -28,73 +19,15 @@ function Tweet({ isReply, isLast, isRetweet, ...data }) {
   const navigate = useNavigate();
   const isMenuOpen = Boolean(anchorEl);
   const user = auth.currentUser;
+  const [tweet, setTweet] = useState(data);
 
-  const onDelete = async () => {
+  const onClickDelete = async (tweetId) => {
     if (!confirm("정말로 삭제하실건가요?")) {
       setIsOpen(false);
       onClickCloseMenu();
       return;
-    }
-
-    try {
-      const replyQuery = query(
-        collection(db, `replies`),
-        where("tweetId", "==", data.id)
-      );
-
-      const likeQuery = query(
-        collection(db, `likes`),
-        where("tweetId", "==", data.id)
-      );
-
-      const alarmQuery = query(
-        collection(db, "alarm"),
-        where("tweetId", "==", data.id)
-      );
-
-      const imagesQuery = query(
-        collection(db, "images"),
-        where("tweetId", "==", data.id)
-      );
-
-      // tweets
-      await deleteDoc(doc(db, "tweets", data.id));
-
-      // images storage
-      if (data.images) {
-        data.images.forEach(async (image) => {
-          // storage 삭제
-          const path = decodeURIComponent(image.split("/o/")[1].split("?")[0]);
-          const photoRef = ref(storage, path);
-          await deleteObject(photoRef);
-        });
-      }
-
-      // images
-      const imagesSnapshot = await getDocs(imagesQuery);
-      imagesSnapshot.forEach(async (item) => {
-        await deleteDoc(doc(db, "images", item.id));
-      });
-
-      // reply
-      const replySnapshot = await getDocs(replyQuery);
-      replySnapshot.forEach(async (item) => {
-        await deleteDoc(doc(db, "replies", item.id));
-      });
-
-      // like
-      const likeSnapshot = await getDocs(likeQuery);
-      likeSnapshot.forEach(async (item) => {
-        await deleteDoc(doc(db, "likes", item.id));
-      });
-
-      // alarm
-      const alarmSnapshot = await getDocs(alarmQuery);
-      alarmSnapshot.forEach(async (item) => {
-        await deleteDoc(doc(db, "alarm", item.id));
-      });
-    } catch (error) {
-      console.log(error);
+    } else {
+      clickDelete(tweetId);
     }
   };
 
@@ -123,42 +56,8 @@ function Tweet({ isReply, isLast, isRetweet, ...data }) {
 
   const onClickLike = async (e) => {
     e.stopPropagation();
-
-    if (data.like.isLiked) {
-      await deleteDoc(doc(db, "likes", data.like.id));
-
-      const alarmQuery = query(
-        collection(db, "alarm"),
-        where("likeId", "==", data.like.id)
-      );
-      const alarmSnapshot = await getDocs(alarmQuery);
-      alarmSnapshot.forEach(async (item) => {
-        await deleteDoc(doc(db, "alarm", item.id));
-      });
-    } else {
-      // 조아요
-      const doc = await addDoc(collection(db, `likes`), {
-        userId: user.uid,
-        tweetId: data.id,
-        createdAt: Date.now(),
-      });
-
-      // 알람
-      if (data.user.id !== user.uid) {
-        const content = `${user.displayName}님이 ${
-          data.tweet.length > 10 ? data.tweet.substr(0, 10) + "..." : data.tweet
-        }글을 좋아합니다.`;
-        await addDoc(collection(db, "alarm"), {
-          userId: data.user.id, // 조아요 당한 사람 uid
-          targetId: user.uid, // 조아요 한 사람 uid
-          content: content,
-          tweetId: data.id,
-          likeId: doc.id,
-          isChecked: false,
-          createdAt: Date.now(),
-        });
-      }
-    }
+    const updateLike = await likeTweet(tweet, user);
+    setTweet({ ...tweet, like: updateLike });
   };
 
   const onClickRelpyDialog = useCallback((e) => {
@@ -173,7 +72,7 @@ function Tweet({ isReply, isLast, isRetweet, ...data }) {
 
   const onClickUser = useCallback((e) => {
     e.stopPropagation();
-    navigate(`/profile`, { state: { userId: data.user.id } });
+    navigate(`/profile`, { state: { userId: tweet.user.id } });
   }, []);
 
   return (
@@ -189,8 +88,8 @@ function Tweet({ isReply, isLast, isRetweet, ...data }) {
         <div className="top">
           <div className="left" onClick={onClickUser}>
             <div className="photo">
-              {data.user != undefined && data.user.photo ? (
-                <img src={data.user.photo} />
+              {tweet.user != undefined && tweet.user.photo ? (
+                <img src={tweet.user.photo} />
               ) : (
                 <>
                   <svg
@@ -210,14 +109,15 @@ function Tweet({ isReply, isLast, isRetweet, ...data }) {
                 </>
               )}
             </div>
-            <div>{data.user != undefined ? data.user.name : ""}</div>
-            <div className="time">{timeAgo(data.createdAt)}</div>
+            <div>{tweet.user != undefined ? tweet.user.name : ""}</div>
+            <div className="time">{timeAgo(tweet.createdAt)}</div>
           </div>
           {isRetweet ? (
             <></>
           ) : (
             <div className="right">
-              {data.user != undefined && data.user.name === user.displayName ? (
+              {tweet.user != undefined &&
+              tweet.user.name === user.displayName ? (
                 <div className="menu" onClick={onClickMenu}>
                   <IconButton
                     className="btn"
@@ -267,7 +167,7 @@ function Tweet({ isReply, isLast, isRetweet, ...data }) {
                     </MenuItem>
                     <MenuItem
                       key={"remove"}
-                      onClick={onDelete}
+                      onClick={() => onClickDelete(tweet.id)}
                       sx={{
                         borderBottom: "0px !important",
                       }}
@@ -284,10 +184,10 @@ function Tweet({ isReply, isLast, isRetweet, ...data }) {
           )}
         </div>
         <div className="middle" onClick={isReply ? null : onClickRelpyDialog}>
-          <p className="payload">{data.tweet}</p>
-          {data.images && data.images.length > 0 ? (
+          <p className="payload">{tweet.tweet}</p>
+          {tweet.images && tweet.images.length > 0 ? (
             <div className="image">
-              <ImageSlider images={data.images}></ImageSlider>
+              <ImageSlider images={tweet.images}></ImageSlider>
             </div>
           ) : null}
         </div>
@@ -295,7 +195,7 @@ function Tweet({ isReply, isLast, isRetweet, ...data }) {
           <></>
         ) : (
           <div className="bottom">
-            {data.like && data.like.isLiked ? (
+            {tweet.like && tweet.like.indexOf(user.uid) > -1 ? (
               <div
                 className="like-btn"
                 onClick={isRetweet ? undefined : onClickLike}
@@ -332,7 +232,7 @@ function Tweet({ isReply, isLast, isRetweet, ...data }) {
                 </svg>
               </div>
             )}
-            {data.like && data.like.count}
+            {tweet.like && tweet.like.length}
             <div
               className="reply-btn"
               style={{ cursor: isRetweet ? "auto" : "pointer" }}
@@ -352,7 +252,7 @@ function Tweet({ isReply, isLast, isRetweet, ...data }) {
                 />
               </svg>
             </div>
-            {data.reply && data.reply.count}
+            {tweet.reply && tweet.reply.count}
             <div
               className="re-tweet-btn"
               onClick={isRetweet ? undefined : onClickReTweetDialog}
@@ -373,30 +273,30 @@ function Tweet({ isReply, isLast, isRetweet, ...data }) {
                 />
               </svg>
             </div>
-            {data.retweet && data.retweet.count}
+            {tweet.retweet && tweet.retweet.count}
           </div>
         )}
       </div>
       <EditTweetDialog
         isOpen={isOpen}
         handleClose={handleClose}
-        images={data.images}
-        id={data.id}
-        tweet={data.tweet}
+        images={tweet.images}
+        id={tweet.id}
+        tweet={tweet.tweet}
       />
       <TweetReplyDialog
         isOpenReply={isOpenReply}
         handleClose={handleClose}
-        {...data}
+        {...tweet}
       />
       <ReTweetDialog
         isOpenReTweet={isOpenReTweet}
         handleClose={handleClose}
-        userData={data.user}
-        tweet={data.tweet}
-        id={data.id}
-        createdAt={data.createdAt}
-        images={data.images}
+        userData={tweet.user}
+        tweet={tweet.tweet}
+        id={tweet.id}
+        createdAt={tweet.createdAt}
+        images={tweet.images}
       />
     </>
   );

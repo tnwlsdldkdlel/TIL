@@ -3,7 +3,7 @@ import "./timeline.css";
 import Tweet from "../tweet";
 import ReTweet from "../re-tweet";
 import BackDrop from "../../common/loading";
-import { getTweetList } from "../../../api/tweetApi";
+import { deleteTweet, getTweetList } from "../../../api/tweetApi";
 
 export default function Timeline() {
   const [tweets, setTweets] = useState([]);
@@ -49,29 +49,34 @@ export default function Timeline() {
   const fetchInitialTweets = async (isScrolled) => {
     setIsLoading(true);
     try {
-      getTweetList(isScrolled, paging.lastVisible, paging.hasMore).then(
-        ({ tweetsData, hasMore, lastVisible }) => {
-          setPaging((prev) => ({
-            ...prev,
-            hasMore: hasMore,
-            lastVisible: lastVisible,
-          }));
-
-          if (isScrolled) {
-            setTweets((prev) => [...prev, tweetsData]);
-          } else {
-            setTweets(tweetsData);
-          }
-        }
+      const { tweetsData, hasMore, lastVisible } = await getTweetList(
+        isScrolled,
+        paging.lastVisible,
+        paging.hasMore
       );
+
+      setPaging((prev) => ({
+        ...prev,
+        hasMore: hasMore,
+        lastVisible: lastVisible,
+      }));
+
+      if (isScrolled) {
+        setTweets((prev) => [...prev, ...tweetsData]);
+      } else {
+        setTweets(tweetsData);
+      }
     } catch (error) {
-      console.error("Error fetching initial tweets:", error);
+      console.error(error);
     } finally {
       setIsLoading(false);
     }
   };
 
-  console.log(tweets);
+  const clickDelete = (tweetId) => {
+    deleteTweet(tweetId);
+    setTweets((prev) => prev.filter((item) => item.id !== tweetId));
+  };
 
   return (
     <div className="time-line scrollable" ref={scrollableDivRef}>
@@ -83,7 +88,12 @@ export default function Timeline() {
             {...item}
           />
         ) : (
-          <Tweet key={item.id} isLast={index === tweets.length - 1} {...item} />
+          <Tweet
+            key={item.id}
+            isLast={index === tweets.length - 1}
+            clickDelete={clickDelete}
+            {...item}
+          />
         )
       )}
       <BackDrop isLoading={isLoading}></BackDrop>

@@ -35,7 +35,7 @@ export default function Post() {
       const doc = await addTweet(input);
 
       if (images.length > 0) {
-        uploadTweetImage(images, doc).then((uploadImages) => {
+        await uploadTweetImage(images, doc.id).then((uploadImages) => {
           addTweetImage(doc, uploadImages);
         });
       }
