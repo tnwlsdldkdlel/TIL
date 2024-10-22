@@ -4,6 +4,7 @@ import MoreVertIcon from "@mui/icons-material/MoreVert";
 import { memo } from "react";
 import FollowRemoveDialog from "./follow-remove-dialog";
 import { useNavigate } from "react-router-dom";
+import FollowingRemoveDialog from "./following-remove-dialog";
 
 function FollowList({
   isOpen,
@@ -11,6 +12,7 @@ function FollowList({
   onClickMenu,
   handleClose,
   onClickRemoveFollow,
+  onClickRemoveFollowing,
   ...data
 }) {
   const navigate = useNavigate();
@@ -67,9 +69,17 @@ function FollowList({
         </div>
       </div>
       <FollowRemoveDialog
-        isOpen={isOpen}
+        isOpen={isOpen === "follower"}
         handleClose={handleClose}
         onClickRemoveFollow={() => onClickRemoveFollow(data.id)}
+        followId={data.id}
+        photo={data.user.photo}
+        name={data.user.name}
+      />
+      <FollowingRemoveDialog
+        isOpen={isOpen === "following"}
+        handleClose={handleClose}
+        onClickRemoveFollowing={() => onClickRemoveFollowing(data.id)}
         followId={data.id}
         photo={data.user.photo}
         name={data.user.name}

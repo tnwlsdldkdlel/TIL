@@ -160,11 +160,13 @@
 .follow-remove-dialog .btn .remove {
   border: 2px solid #5fb404;
   background-color: #5fb404;
+  cursor: pointer;
 }
 
 .follow-remove-dialog .btn .cancel {
   border: 2px solid #2f2f2f;
   background-color: #2f2f2f;
+  cursor: pointer;
 }
 
 body

@@ -148,3 +148,25 @@ export async function setfollow(userId) {
 
     return doc.id;
 }
+
+export async function deleteRemoveFollow(followId) {
+    const followQuery = query(
+        collection(db, "follow"),
+        where("__name__", "==", followId)
+    );
+    const followSnapshot = await getDocs(followQuery);
+    const followData = followSnapshot.docs[0].data();
+
+    // 상대방의 팔로우 목록에서 나를 지운다. targetId : 상대방 userId : 나
+    const targetFollowQuery = query(
+        collection(db, "follow"),
+        where("userId", "==", followData.targetId),
+        where("targetId", "==", followData.userId),
+    );
+    const targetFollowSnapshot = await getDocs(targetFollowQuery);
+    await deleteDoc(doc(db, "follow", targetFollowSnapshot.docs[0].id));
+
+    // 나도 상대방을 팔로우 목록에서 지운다.
+    await deleteDoc(doc(db, "follow", followId));
+}
+

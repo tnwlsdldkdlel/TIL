@@ -4,7 +4,7 @@ import "./alarm.css";
 
 function Alarm({ onClickDetail, ...data }) {
   return (
-    <div className={`alarm_${data.tweetId}`} onClick={onClickDetail}>
+    <div className={`alarm_${data.tweet.id}`} onClick={onClickDetail}>
       <div className="left">
         {data.user && data.user.photo ? (
           <img src={data.user.photo} />
@@ -31,8 +31,8 @@ function Alarm({ onClickDetail, ...data }) {
         <div className="time">{timeAgo(data.createdAt)}</div>
       </div>
       <div className="right">
-        {data.images ? (
-          <img src={data.images} width={50} height={50} />
+        {data.tweet.images ? (
+          <img src={data.tweet.images} width={50} height={50} />
         ) : (
           <div className="no_img"></div>
         )}

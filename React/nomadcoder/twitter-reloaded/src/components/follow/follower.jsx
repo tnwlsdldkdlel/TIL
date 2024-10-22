@@ -1,16 +1,16 @@
-import { memo, useCallback, useEffect, useState } from "react";
+import { memo, useCallback, useLayoutEffect, useState } from "react";
 import "./follower.css";
 import FollowList from "./follow-list";
 import { auth } from "../../firebase";
 import { useLocation } from "react-router-dom";
 import {
+  deleteRemoveFollow,
   getFollower,
   getFollwing,
   setfollow,
   setUnfollow,
 } from "../../api/followerApi";
 import FollowListNotMe from "./follow-list-not-me";
-import BackDrop from "../common/loading";
 
 function Follower() {
   const location = useLocation();
@@ -18,45 +18,40 @@ function Follower() {
   const [tab, setTab] = useState(stateTab || "follower");
   const [search, setSearch] = useState("");
   const [list, setList] = useState([]);
-  const [isOpen, setOpen] = useState(false);
+  const [isOpen, setOpen] = useState("");
   const user = auth.currentUser;
-  const [isLoading, setIsLoading] = useState(false);
 
-  useEffect(() => {
-    getFollowList(tab);
-  }, []);
+  useLayoutEffect(() => {
+    getFollowList(tab, search);
+  }, [tab, search]);
 
   const onClickTab = (e) => {
     setTab(e.target.id);
     setSearch("");
-    getFollowList(e.target.id);
   };
 
   const onChangeSearch = (e) => {
     setSearch(e.target.value);
-    getFollowList(tab, e.target.value);
   };
 
   const onClickRemoveSearh = () => {
     setSearch("");
-    getFollowList(tab);
   };
 
   const getFollowList = async (target, search) => {
-    setIsLoading(true);
-    // 팔로워 : 나를 팔로우하는 사람들 => 내가 targetId
-    let uid = userId ? userId : user.id;
+    try {
+      let uid = userId ? userId : user.id;
 
-    if (target === "follower") {
-      const list = await getFollower(uid, search);
-      setList(list);
-    } else {
-      // 팔로잉 : 내가 팔로우하는 사람들 => 내가 userId
-      const list = await getFollwing(uid, search);
-      setList(list);
+      if (target === "follower") {
+        const list = await getFollower(uid, search);
+        setList(list);
+      } else {
+        const list = await getFollwing(uid, search);
+        setList(list);
+      }
+    } catch (error) {
+      console.error("Error fetching follow list:", error);
     }
-
-    setIsLoading(false);
   };
 
   const onFollow = async (target) => {
@@ -64,19 +59,24 @@ function Follower() {
     await getFollowList(tab);
   };
 
-  const handleClose = useCallback(async () => setOpen(false), []);
+  const handleClose = useCallback(async () => {
+    setOpen("");
+  }, []);
 
-  const onClickRemoveFollow = useCallback(
-    async (followId) => {
-      await setUnfollow(followId);
-      await handleClose();
-      await getFollowList(tab);
-    },
-    [list]
-  );
+  const onClickRemoveFollow = useCallback(async (followId) => {
+    await deleteRemoveFollow(followId);
+    await handleClose();
+    await getFollowList(tab);
+  }, []);
+
+  const onClickRemoveFollowing = useCallback(async (followId) => {
+    await setUnfollow(followId);
+    await handleClose();
+    await getFollowList(tab);
+  }, []);
 
   const onClickMenu = useCallback(() => {
-    setOpen(true);
+    setOpen(tab);
   }, []);
 
   return (
@@ -149,7 +149,9 @@ function Follower() {
                 isOpen={isOpen}
                 onClickMenu={onClickMenu}
                 onClickRemoveFollow={onClickRemoveFollow}
+                onClickRemoveFollowing={onClickRemoveFollowing}
                 onFollow={onFollow}
+                handleClose={handleClose}
                 {...data}
               />
             ) : (
@@ -158,7 +160,6 @@ function Follower() {
           )
         )}
       </div>
-      <BackDrop isLoading={isLoading}></BackDrop>
     </div>
   );
 }

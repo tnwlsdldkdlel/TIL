@@ -1,106 +1,22 @@
 import { Dialog, DialogTitle } from "@mui/material";
 import TweetReply from "./tweet-reply";
 import { memo, useCallback, useEffect, useState } from "react";
-import {
-  collection,
-  getDocs,
-  onSnapshot,
-  orderBy,
-  query,
-  where,
-} from "firebase/firestore";
-import { db } from "../../../firebase";
 import PostTweetReplyForm from "./post-tweet-reply-form";
 import Tweet from "../tweet";
+import { getReplyList } from "../../../api/replyApi";
 
 function TweetReplyDialog({ isOpenReply, handleClose, ...data }) {
   const [replies, setReplies] = useState([]);
 
   useEffect(() => {
     getData();
-  }, [isOpenReply]);
+  }, [data.id]);
 
   const getData = useCallback(async () => {
-    if (!data.id) return;
-    delete data.username;
-
-    const repliesQuery = query(
-      collection(db, "replies"),
-      where("tweetId", "==", data.id),
-      orderBy("createdAt", "desc")
-    );
-
-    // 실시간 댓글
-    const snapshot = await getDocs(repliesQuery);
-    const repliesData = snapshot.docs.map((doc) => {
-      const replyData = doc.data();
-      const replyId = doc.id;
-
-      return {
-        ...replyData,
-        id: replyId,
-        like: { isLiked: false, count: 0 },
-        user: { id: replyData.userId, name: "", photo: "" },
-      };
-    });
-
-    setReplies(repliesData);
-
-    repliesData.forEach(async (reply) => {
-      const likesQuery = query(
-        collection(db, "likes"),
-        where("replyId", "==", reply.id)
-      );
-
-      onSnapshot(likesQuery, (likeSnapshot) => {
-        const likeCount = likeSnapshot.docs.length;
-        let likeId = 0;
-
-        const isLiked = likeSnapshot.docs.some((likeDoc) => {
-          if (likeDoc.data().userId === reply.user.id) {
-            likeId = likeDoc.id;
-            return true;
-          }
-          return false;
-        });
-
-        setReplies((prevReplies) =>
-          prevReplies.map((prevReply) => {
-            if (prevReply.id === reply.id) {
-              return {
-                ...prevReply,
-                like: { isLiked, count: likeCount, id: likeId },
-              };
-            }
-            return prevReply;
-          })
-        );
-      });
-
-      const userQuery = query(
-        collection(db, "user"),
-        where("id", "==", reply.user.id)
-      );
-
-      const userSnapshot = await getDocs(userQuery);
-      const user = userSnapshot.docs[0].data();
-
-      setReplies((prevReplies) =>
-        prevReplies.map((prevReply) => {
-          if (prevReply.user.id === user.id) {
-            return {
-              ...prevReply,
-              user: {
-                id: user.id,
-                name: user.name,
-                photo: user.photo || "",
-              },
-            };
-          }
-          return prevReply;
-        })
-      );
-    });
+    if (data.id) {
+      const list = await getReplyList(data.id);
+      setReplies(list);
+    }
   }, [data.id]);
 
   return (
@@ -143,20 +59,13 @@ function TweetReplyDialog({ isOpenReply, handleClose, ...data }) {
           <div className="title">
             <p>댓글</p>
           </div>
-
           {replies.length > 0 ? (
             replies.map((reply, index) => {
               return (
                 <TweetReply
                   key={reply.id}
                   isLast={index === replies.length - 1}
-                  userId={data.user.id}
-                  tweetId={data.id}
-                  like={reply.like}
-                  id={reply.id}
-                  content={reply.reply}
-                  userData={reply.user}
-                  createdAt={reply.createdAt}
+                  {...reply}
                 />
               );
             })
@@ -167,10 +76,7 @@ function TweetReplyDialog({ isOpenReply, handleClose, ...data }) {
         <div className="reply-form">
           <PostTweetReplyForm
             tweetId={data.id}
-            userId={data.user != undefined ? data.user.id : ""}
-            tweet={
-              data.tweet > 10 ? data.tweet.substr(0, 10) + "..." : data.tweet
-            }
+            userId={data.user}
             getData={getData}
           />
         </div>

@@ -1,6 +1,7 @@
 import { addDoc, collection, deleteDoc, doc, getDocs, limit, orderBy, query, startAfter, updateDoc, where } from "firebase/firestore";
 import { auth, db, storage } from "../firebase";
 import { deleteObject, ref } from "firebase/storage";
+import { deleteLikeTweetAlarm, likeTweetAlarm } from "./alarmApi";
 
 export async function addTweet(data) {
     const user = auth.currentUser;
@@ -10,8 +11,6 @@ export async function addTweet(data) {
         createdAt: Date.now(),
         updatedAt: Date.now(),
         like: [],
-        reply: { count: 0 },
-        retweet: { count: 0 },
         user: { id: user.uid, name: user.displayName, photo: user.photoURL },
     });
 
@@ -118,15 +117,7 @@ export async function likeTweet(data) {
             });
 
             // 알림 삭제
-            const alarmQuery = query(
-                collection(db, "alarm"),
-                where("tweetId", "==", data.id)
-            );
-            const alarmSnapshot = await getDocs(alarmQuery);
-            alarmSnapshot.forEach(async (item) => {
-                await deleteDoc(doc(db, "alarm", item.id));
-            });
-
+            await deleteLikeTweetAlarm(data.id);
             return updateLikedUser;
         } else {
             const updateLikedUser = [...likedUser, loginedUserUid];
@@ -137,15 +128,7 @@ export async function likeTweet(data) {
 
             // 알람 추가 (본인 글 제외)
             if (data.user.id !== loginedUserUid) {
-                const content = `${loginedUser.displayName}님이 ${data.tweet.length > 10 ? data.tweet.substr(0, 10) + "..." : data.tweet} 글을 좋아합니다.`;
-                await addDoc(collection(db, "alarm"), {
-                    userId: data.user.id, // 좋아요 당한 사람 uid
-                    targetId: loginedUserUid, // 좋아요 한 사람 uid
-                    content: content,
-                    tweetId: data.id,
-                    isChecked: false,
-                    createdAt: Date.now(),
-                });
+                await likeTweetAlarm(loginedUser, data);
             }
 
             return updateLikedUser;
@@ -156,23 +139,21 @@ export async function likeTweet(data) {
     }
 }
 
-export async function getMyTweetList(isScrolled, lastVisible) {
+export async function getMyTweetList(isScrolled, lastVisible, userId) {
     try {
         let tweetsQuery = null;
-        const loginedUser = auth.currentUser;
-        const loginedUserUid = loginedUser.uid;
 
         if (!isScrolled) {
             tweetsQuery = query(
                 collection(db, "tweets"),
-                where("userId", "==", loginedUserUid),
+                where("user.id", "==", userId),
                 limit(20),
                 orderBy("createdAt", "desc")
             );
         } else {
             tweetsQuery = query(
                 collection(db, "tweets"),
-                where("userId", "==", loginedUserUid),
+                where("user.id", "==", userId),
                 limit(20),
                 orderBy("createdAt", "desc"),
                 startAfter(lastVisible)
@@ -195,3 +176,11 @@ export async function getMyTweetList(isScrolled, lastVisible) {
     }
 }
 
+export async function getTweetOnlyOne(tweetId) {
+    const replyQuery = query(
+        collection(db, `tweets`),
+        where("__name__", "==", tweetId)
+    );
+    const querySnapshot = await getDocs(replyQuery);
+    return querySnapshot.docs[0].data();
+}

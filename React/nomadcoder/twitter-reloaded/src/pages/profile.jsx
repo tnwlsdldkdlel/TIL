@@ -1,6 +1,6 @@
 import "./profile.css";
 import { auth } from "../firebase";
-import { memo, useCallback, useEffect, useRef, useState } from "react";
+import { memo, useCallback, useLayoutEffect, useRef, useState } from "react";
 import Tweet from "../components/tweet/tweet";
 import ReTweet from "../components/tweet/re-tweet";
 import { useLocation, useNavigate } from "react-router-dom";
@@ -35,10 +35,20 @@ function Profile() {
   const [isLoading, setIsLoading] = useState(false);
   const [isOpen, setIsOpen] = useState(false);
 
-  useEffect(() => {
-    fetchInitialTweets(false);
-    getInfo();
-    getFollow();
+  useLayoutEffect(() => {
+    const fetchData = async () => {
+      setIsLoading(true);
+
+      try {
+        await Promise.all([fetchInitialTweets(false), getInfo(), getFollow()]);
+      } catch (error) {
+        console.error(error);
+      } finally {
+        setIsLoading(false);
+      }
+    };
+
+    fetchData();
 
     const scrollableDiv = scrollableDivRef.current;
     if (scrollableDiv) {
@@ -58,12 +68,11 @@ function Profile() {
   }, [userId]);
 
   const fetchInitialTweets = async (isScrolled) => {
-    setIsLoading(true);
     try {
       const { tweetsData, hasMore, lastVisible } = await getMyTweetList(
         isScrolled,
         paging.lastVisible,
-        paging.hasMore
+        userId
       );
 
       setPaging((prev) => ({
@@ -79,8 +88,6 @@ function Profile() {
       }
     } catch (error) {
       console.error(error);
-    } finally {
-      setIsLoading(false);
     }
   };
 
@@ -127,7 +134,9 @@ function Profile() {
     setIsOpen(true);
   };
 
-  const handleClose = useCallback(async () => setIsOpen(false), []);
+  const handleClose = useCallback(() => {
+    setIsOpen(false);
+  }, []);
 
   const onClickRemoveFollow = useCallback(async () => {
     await setUnfollow(follow.id);
@@ -135,13 +144,17 @@ function Profile() {
     await getFollow();
     await getInfo();
     await handleClose();
-  }, [follow]);
+  }, []);
+
+  if (isLoading) {
+    return <div></div>;
+  }
 
   return (
     <div className="profile">
       <div className="top">
         <label className="avatar-upload">
-          {info.photo ? (
+          {info && info.photo ? (
             <img src={info.photo} />
           ) : (
             <>
@@ -198,21 +211,27 @@ function Profile() {
       </div>
       <div className="down">
         <span className="name">{info.name}</span>
-        {info.intro ? <span className="intro">{info.intro}</span> : <></>}
+        {info && info.intro ? (
+          <span className="intro">{info.intro}</span>
+        ) : (
+          <></>
+        )}
       </div>
-      {!userId || userId === user.uid ? (
-        <button className="edit-btn" onClick={onClickProfile}>
-          프로필편집
-        </button>
-      ) : follow.isFollow ? (
-        <button className="following-btn" onClick={onClickUnfollow}>
-          팔로잉
-        </button>
-      ) : (
-        <button className="follow-btn" onClick={onClickFollow}>
-          팔로우
-        </button>
-      )}
+      {userId && user.uid ? (
+        userId === user.uid ? (
+          <button className="edit-btn" onClick={onClickProfile}>
+            프로필편집
+          </button>
+        ) : follow.isFollow ? (
+          <button className="following-btn" onClick={onClickUnfollow}>
+            팔로잉
+          </button>
+        ) : (
+          <button className="follow-btn" onClick={onClickFollow}>
+            팔로우
+          </button>
+        )
+      ) : null}
       <div className="my-tweets scrollable" ref={scrollableDivRef}>
         {tweet.map((item, index) =>
           item.retweetId != undefined ? (

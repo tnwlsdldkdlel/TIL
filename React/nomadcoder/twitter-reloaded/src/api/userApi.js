@@ -117,3 +117,19 @@ export async function updatedUser(input) {
         }
     }
 }
+
+export async function setProfileUrl(url) {
+    const loginedUser = auth.currentUser;
+    const loginedUserUid = loginedUser.uid;
+
+    const userQuery = query(
+        collection(db, "user"),
+        where("id", "==", loginedUserUid)
+    );
+    const querySnapshot = await getDocs(userQuery);
+    const docRef = querySnapshot.docs[0].ref;
+    await updateDoc(docRef, {
+        photo: url,
+        updatedAt: Date.now(),
+    });
+}

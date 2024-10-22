@@ -1,62 +1,16 @@
-import { memo } from "react";
+import { memo, useState } from "react";
 import { timeAgo } from "../../../common/time-ago";
-import { auth, db } from "../../../firebase";
-import {
-  addDoc,
-  collection,
-  deleteDoc,
-  doc,
-  getDocs,
-  query,
-  where,
-} from "firebase/firestore";
+import { replyLike } from "../../../api/replyApi";
+import { auth } from "../../../firebase";
 
-function TweetReply({
-  isLast,
-  userId,
-  tweetId,
-  like,
-  id,
-  content,
-  userData,
-  createdAt,
-}) {
+function TweetReply({ isLast, ...data }) {
+  const [reply, setReply] = useState(data);
   const user = auth.currentUser;
 
   const onClickLike = async (e) => {
     e.stopPropagation();
-
-    if (like.isLiked) {
-      await deleteDoc(doc(db, `likes`, like.id));
-
-      const alarmQuery = query(
-        collection(db, "alarm"),
-        where("likeId", "==", like.id)
-      );
-      const alarmSnapshot = await getDocs(alarmQuery);
-      alarmSnapshot.forEach(async (item) => {
-        await deleteDoc(doc(db, "alarm", item.id));
-      });
-    } else {
-      const doc = await addDoc(collection(db, `likes`), {
-        userId: user.uid,
-        replyId: id,
-        createdAt: Date.now(),
-      });
-
-      if (userId !== user.uid) {
-        const message = `${user.displayName}님이 ${content}댓글을 좋아합니다.`;
-        await addDoc(collection(db, "alarm"), {
-          userId: userId, // 조아요 당한 사람 uid
-          targetId: user.uid, // 조아요 한 사람 uid
-          content: message,
-          tweetId: tweetId,
-          likeId: doc.id,
-          isChecked: false,
-          createdAt: Date.now(),
-        });
-      }
-    }
+    const updateLike = await replyLike(reply.id);
+    setReply({ ...reply, like: updateLike });
   };
 
   return (
@@ -64,15 +18,15 @@ function TweetReply({
       <div className="tweet" style={{ borderBottom: isLast ? "none" : "" }}>
         <div className="top">
           <div className="left">
-            <div>{userData.name}</div>
-            <div className="time">{timeAgo(createdAt)}</div>
+            <div>{reply.user.name}</div>
+            <div className="time">{timeAgo(reply.createdAt)}</div>
           </div>
         </div>
         <div className="middle">
-          <p className="payload">{content}</p>
+          <p className="payload">{reply.reply}</p>
         </div>
         <div className="bottom">
-          {like.isLiked ? (
+          {reply.like.indexOf(user.uid) > -1 ? (
             <div className="like-btn" onClick={onClickLike}>
               <svg
                 xmlns="http://www.w3.org/2000/svg"
@@ -101,7 +55,7 @@ function TweetReply({
               </svg>
             </div>
           )}
-          {like.count}
+          {reply.like.length}
         </div>
       </div>
     </>
