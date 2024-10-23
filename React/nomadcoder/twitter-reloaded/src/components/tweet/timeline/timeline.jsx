@@ -1,4 +1,4 @@
-import { useEffect, useRef, useState } from "react";
+import { useCallback, useEffect, useRef, useState } from "react";
 import "./timeline.css";
 import Tweet from "../tweet";
 import ReTweet from "../re-tweet";
@@ -16,7 +16,7 @@ export default function Timeline() {
   const [isLoading, setIsLoading] = useState(false);
 
   useEffect(() => {
-    fetchInitialTweets(false);
+    fetchInitialTweets();
 
     const scrollableDiv = scrollableDivRef.current;
     if (scrollableDiv) {
@@ -46,7 +46,7 @@ export default function Timeline() {
     }
   };
 
-  const fetchInitialTweets = async (isScrolled) => {
+  const fetchInitialTweets = async (isScrolled = false) => {
     setIsLoading(true);
     try {
       const { tweetsData, hasMore, lastVisible } = await getTweetList(
@@ -73,18 +73,20 @@ export default function Timeline() {
     }
   };
 
-  const clickDelete = (tweetId) => {
-    deleteTweet(tweetId);
-    setTweets((prev) => prev.filter((item) => item.id !== tweetId));
-  };
+  const clickDelete = useCallback(async (tweetId) => {
+    await deleteTweet(tweetId);
+    fetchInitialTweets();
+  }, []);
 
   return (
     <div className="time-line scrollable" ref={scrollableDivRef}>
       {tweets.map((item, index) =>
-        item.retweetId != undefined ? (
+        item.reTweet != undefined ? (
           <ReTweet
             key={item.id}
             isLast={index === tweets.length - 1}
+            clickDelete={clickDelete}
+            fetchInitialTweets={fetchInitialTweets}
             {...item}
           />
         ) : (
@@ -92,6 +94,7 @@ export default function Timeline() {
             key={item.id}
             isLast={index === tweets.length - 1}
             clickDelete={clickDelete}
+            fetchInitialTweets={fetchInitialTweets}
             {...item}
           />
         )

@@ -1,31 +1,20 @@
 import { memo, useState } from "react";
 import "../tweet.css";
-import { setReply } from "../../../api/replyApi";
 
-function PostTweetReplyForm({ tweetId, userId, getData }) {
+function PostTweetReplyForm({ onSubmit }) {
   const [input, setInput] = useState("");
 
   const onChange = (e) => {
     setInput(e.target.value);
   };
 
-  const onSubmit = async (e) => {
-    e.preventDefault();
-
-    if (input === "") return;
-
-    try {
-      await setReply(input, tweetId, userId);
-
-      getData();
-      setInput("");
-    } catch (error) {
-      console.log(error);
-    }
+  const onClickSubmit = () => {
+    onSubmit(input);
+    setInput("");
   };
 
   return (
-    <form className="post-tweet-form" onSubmit={onSubmit}>
+    <div className="post-tweet-form">
       <textarea
         rows={5}
         maxLength={180}
@@ -39,9 +28,9 @@ function PostTweetReplyForm({ tweetId, userId, getData }) {
         className="submit-btn"
         type="submit"
         value="댓글 달기"
-        onClick={onSubmit}
+        onClick={onClickSubmit}
       ></input>
-    </form>
+    </div>
   );
 }
 

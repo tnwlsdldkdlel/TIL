@@ -1,201 +1,40 @@
-import {
-  addDoc,
-  collection,
-  deleteDoc,
-  doc,
-  getDocs,
-  onSnapshot,
-  query,
-  where,
-} from "firebase/firestore";
-import { auth, db, storage } from "../../firebase";
+import { auth } from "../../firebase";
 import "./tweet.css";
-import { memo, useCallback, useEffect, useState } from "react";
+import { memo, useCallback, useState } from "react";
 import { IconButton, Menu, MenuItem } from "@mui/material";
 import MoreVertIcon from "@mui/icons-material/MoreVert";
 import EditTweetDialog from "./edit/edit-tweet-dialog";
-import { deleteObject, ref } from "firebase/storage";
 import { timeAgo } from "../../common/time-ago";
 import TweetReplyDialog from "./reply/tweet-reply-dialog";
 import ReTweetDialog from "./retweet/tweet-retweet-dialog";
 import Tweet from "./tweet";
 import { useNavigate } from "react-router-dom";
+import { likeTweet } from "../../api/tweetApi";
 
-function ReTweet({ isReply, isLast, isRetweet, ...data }) {
+function ReTweet({
+  isReply,
+  isLast,
+  isRetweet,
+  fetchInitialTweets,
+  clickDelete,
+  ...data
+}) {
   const [isOpen, setIsOpen] = useState(false);
   const [isOpenReply, setIsOpenReply] = useState(false);
   const [isOpenReTweet, setIsOpenReTweet] = useState(false);
   const [anchorEl, setAnchorEl] = useState(null);
   const isMenuOpen = Boolean(anchorEl);
   const user = auth.currentUser;
-  const [retweet, setRetweet] = useState({});
   const navigate = useNavigate();
+  const [like, setLike] = useState(data.like);
 
-  useEffect(() => {
-    const repliesQuery = query(
-      collection(db, "tweets"),
-      where("__name__", "==", data.retweetId)
-    );
-
-    const unsubscribeReplies = onSnapshot(repliesQuery, (snapshot) => {
-      const retweetsData = snapshot.docs.map((doc) => {
-        const retweetData = doc.data();
-        const retweetId = doc.id;
-
-        // 유저정보
-        const userQuery = query(
-          collection(db, "user"),
-          where("id", "==", retweetData.userId)
-        );
-
-        onSnapshot(userQuery, (userSnapshot) => {
-          userSnapshot.docs.forEach((doc) => {
-            const userInfo = doc.data();
-
-            setRetweet((prevRetweet) => {
-              if (prevRetweet.id === retweetId) {
-                return {
-                  ...prevRetweet,
-                  user: {
-                    id: userInfo.id,
-                    name: userInfo.name,
-                    photo: userInfo.photo,
-                  },
-                };
-              }
-              return retweet;
-            });
-          });
-        });
-
-        // 자식 컬렉션(예: likes) 스냅샷
-        const likesQuery = query(
-          collection(db, `likes`),
-          where("tweetId", "==", retweetId)
-        );
-
-        onSnapshot(likesQuery, (likeSnapshot) => {
-          const likeCount = likeSnapshot.docs.length;
-          let likeId = 0;
-          const isLiked = likeSnapshot.docs.some((likeDoc) => {
-            if (likeDoc.data().userId === user.uid) {
-              likeId = likeDoc.id;
-              return true;
-            }
-            return false;
-          });
-
-          // 부모 상태 업데이트
-          setRetweet((prevRetweet) => {
-            if (prevRetweet.id === retweetId) {
-              return {
-                ...prevRetweet,
-                like: { isLiked, count: likeCount, id: likeId },
-              };
-            }
-            return retweet;
-          });
-        });
-
-        // 댓글 쿼리
-        const repliesQuery = query(
-          collection(db, "replies"),
-          where("tweetId", "==", retweetId)
-        );
-
-        onSnapshot(repliesQuery, (replySnapshot) => {
-          const replyCount = replySnapshot.docs.length;
-
-          setRetweet((prevTweet) => {
-            if (prevTweet.id === retweetId) {
-              return {
-                ...prevTweet,
-                reply: { count: replyCount },
-              };
-            }
-            return prevTweet;
-          });
-        });
-
-        const retweetQuery = query(
-          collection(db, "tweets"),
-          where("retweetId", "==", retweetId)
-        );
-
-        onSnapshot(retweetQuery, (retweetSnapshot) => {
-          const retweetCount = retweetSnapshot.docs.length;
-
-          // content 업데이트
-          setRetweet((prevTweet) => {
-            if (prevTweet.id === retweetId) {
-              return {
-                ...prevTweet,
-                retweet: { count: retweetCount },
-              };
-            }
-
-            return prevTweet;
-          });
-        });
-
-        return {
-          ...retweetData,
-          id: retweetId,
-          like: { isLiked: false, count: 0 },
-          retweet: { count: 0 },
-          user: { id: retweetData.userId, name: "", photo: "" },
-        };
-      });
-
-      // 부모 상태에 트윗 데이터 설정
-      setRetweet(retweetsData[0]);
-    });
-
-    return () => {
-      unsubscribeReplies();
-    };
-  }, []);
-
-  const onDelete = async () => {
-    const ok = confirm("정말 글을 삭제하실건가요?");
-    if (!ok) {
+  const onClickDelete = async () => {
+    if (!confirm("정말로 삭제하실건가요?")) {
       setIsOpen(false);
       onClickCloseMenu();
       return;
-    }
-
-    try {
-      const replyQuery = query(
-        collection(db, `replies`),
-        where("tweetId", "==", data.id)
-      );
-
-      const likeQuery = query(
-        collection(db, `likes`),
-        where("tweetId", "==", data.id)
-      );
-      // tweets
-      await deleteDoc(doc(db, "tweets", data.id));
-
-      // photo
-      if (data.photo) {
-        const photoRef = ref(storage, `tweets/${user.uid}/${data.id}`);
-        await deleteObject(photoRef);
-      }
-
-      // reply
-      const replySnapshot = await getDocs(replyQuery);
-      replySnapshot.forEach(async (item) => {
-        await deleteDoc(doc(db, "replies", item.id));
-      });
-
-      // like
-      const likeSnapshot = await getDocs(likeQuery);
-      likeSnapshot.forEach(async (item) => {
-        await deleteDoc(doc(db, "likes", item.id));
-      });
-    } catch (error) {
-      console.log(error);
+    } else {
+      clickDelete(data.id);
     }
   };
 
@@ -203,6 +42,7 @@ function ReTweet({ isReply, isLast, isRetweet, ...data }) {
     setIsOpen(false);
     setIsOpenReply(false);
     setIsOpenReTweet(false);
+    fetchInitialTweets();
   }, []);
 
   const onClickMenu = (e) => {
@@ -223,16 +63,8 @@ function ReTweet({ isReply, isLast, isRetweet, ...data }) {
 
   const onClickLike = async (e) => {
     e.stopPropagation();
-
-    if (data.like.isLiked) {
-      await deleteDoc(doc(db, `likes`, data.like.id));
-    } else {
-      await addDoc(collection(db, `likes`), {
-        userId: user.uid,
-        tweetId: data.id,
-        createdAt: Date.now(),
-      });
-    }
+    const updateLike = await likeTweet(data, user);
+    setLike(updateLike);
   };
 
   const onClickRelpyDialog = (e) => {
@@ -340,7 +172,7 @@ function ReTweet({ isReply, isLast, isRetweet, ...data }) {
                     </MenuItem>
                     <MenuItem
                       key={"remove"}
-                      onClick={onDelete}
+                      onClick={onClickDelete}
                       sx={{
                         borderBottom: "0px !important",
                       }}
@@ -370,11 +202,11 @@ function ReTweet({ isReply, isLast, isRetweet, ...data }) {
             <div onClick={onClickRelpyDialog}></div>
           )}
           <div className="re-tweet">
-            <Tweet isLast={true} isRetweet={true} {...retweet} />
+            <Tweet isLast={true} isRetweet={true} {...data.reTweet} />
           </div>
         </div>
         <div className="bottom">
-          {data.like.isLiked ? (
+          {like && like.indexOf(user.uid) > -1 ? (
             <div className="like-btn" onClick={onClickLike}>
               <svg
                 xmlns="http://www.w3.org/2000/svg"
@@ -403,7 +235,7 @@ function ReTweet({ isReply, isLast, isRetweet, ...data }) {
               </svg>
             </div>
           )}
-          {data.like.count}
+          {like && like.length}
           <div className="reply-btn">
             <svg
               xmlns="http://www.w3.org/2000/svg"
@@ -420,7 +252,7 @@ function ReTweet({ isReply, isLast, isRetweet, ...data }) {
               />
             </svg>
           </div>
-          {data.reply.count}
+          {data.count.reply}
           <div className="re-tweet-btn" onClick={onClickReTweetDialog}>
             <svg
               xmlns="http://www.w3.org/2000/svg"
@@ -437,7 +269,7 @@ function ReTweet({ isReply, isLast, isRetweet, ...data }) {
               />
             </svg>
           </div>
-          {data.retweet.count}
+          {data.count.reTweet}
         </div>
       </div>
       <EditTweetDialog

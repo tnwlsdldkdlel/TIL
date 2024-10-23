@@ -3,7 +3,7 @@ import { auth, db } from "../firebase";
 import { deleteLikeReplyAlarm, likeReplyAlarm, tweetReplyAlarm } from "./alarmApi";
 import { getTweetOnlyOne } from "./tweetApi";
 
-export async function setReply(input, tweetId, userId) {
+export async function addReply(input, tweetId, userId) {
     const loginedUser = auth.currentUser;
     const loginedUserUid = loginedUser.uid;
 
@@ -23,10 +23,26 @@ export async function setReply(input, tweetId, userId) {
             like: [],
         });
 
+        const tweetQuery = query(
+            collection(db, `tweets`),
+            where("__name__", "==", tweetId)
+        );
+        const querySnapshot = await getDocs(tweetQuery);
+        const docRef = querySnapshot.docs[0].ref;
+        const tweetData = querySnapshot.docs[0].data();
+        const countObj = tweetData.count;
+        const udpateCount = { ...countObj, reply: countObj.reply + 1 };
+
+        await updateDoc(docRef, {
+            count: udpateCount
+        });
+
         // 알람 추가 (본인 글 제외)
         if (userId !== loginedUserUid) {
             await tweetReplyAlarm(userId, loginedUser, tweetId, input, doc.id);
         }
+
+        return udpateCount;
     } catch (error) {
         console.log(error)
     }

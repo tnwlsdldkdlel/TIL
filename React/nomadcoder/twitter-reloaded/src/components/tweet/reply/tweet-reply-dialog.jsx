@@ -3,21 +3,40 @@ import TweetReply from "./tweet-reply";
 import { memo, useCallback, useEffect, useState } from "react";
 import PostTweetReplyForm from "./post-tweet-reply-form";
 import Tweet from "../tweet";
-import { getReplyList } from "../../../api/replyApi";
+import { addReply, getReplyList } from "../../../api/replyApi";
 
 function TweetReplyDialog({ isOpenReply, handleClose, ...data }) {
   const [replies, setReplies] = useState([]);
+  const [tweet, setTweet] = useState(data);
 
   useEffect(() => {
     getData();
-  }, [data.id]);
+  }, []);
 
   const getData = useCallback(async () => {
-    if (data.id) {
-      const list = await getReplyList(data.id);
+    if (tweet.id) {
+      const list = await getReplyList(tweet.id);
       setReplies(list);
     }
-  }, [data.id]);
+  }, [tweet.id]);
+
+  const onSubmit = useCallback(
+    async (input) => {
+      if (input === "") return;
+
+      try {
+        const udpateCount = await addReply(input, tweet.id, tweet.user);
+        await getData();
+        setTweet((prevTweet) => ({
+          ...prevTweet,
+          count: udpateCount,
+        }));
+      } catch (error) {
+        console.log(error);
+      }
+    },
+    [tweet, getData]
+  );
 
   return (
     <Dialog
@@ -55,7 +74,7 @@ function TweetReplyDialog({ isOpenReply, handleClose, ...data }) {
       </DialogTitle>
       <div className="reply-dialog-content scrollable">
         <div style={{ flex: 1, overflowY: "unset" }}>
-          <Tweet className="tweet" isReply={true} {...data}></Tweet>
+          <Tweet className="tweet" isReply={true} {...tweet}></Tweet>
           <div className="title">
             <p>댓글</p>
           </div>
@@ -74,11 +93,7 @@ function TweetReplyDialog({ isOpenReply, handleClose, ...data }) {
           )}
         </div>
         <div className="reply-form">
-          <PostTweetReplyForm
-            tweetId={data.id}
-            userId={data.user}
-            getData={getData}
-          />
+          <PostTweetReplyForm onSubmit={onSubmit} />
         </div>
       </div>
     </Dialog>

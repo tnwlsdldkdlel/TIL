@@ -11,6 +11,10 @@ export async function addTweet(data) {
         createdAt: Date.now(),
         updatedAt: Date.now(),
         like: [],
+        count: {
+            reply: 0,
+            reTweet: 0
+        },
         user: { id: user.uid, name: user.displayName, photo: user.photoURL },
     });
 
@@ -19,6 +23,17 @@ export async function addTweet(data) {
 
 export async function addTweetImage(doc, uploadImages) {
     await updateDoc(doc, { images: uploadImages });
+}
+
+export async function addTweetImageForId(id, uploadImages) {
+    const tweetQuery = query(
+        collection(db, `tweets`),
+        where("__name__", "==", id)
+    );
+    const tweetSnapshot = await getDocs(tweetQuery);
+    const docRef = tweetSnapshot.docs[0].ref;
+
+    await updateDoc(docRef, { images: uploadImages });
 }
 
 export async function getTweetList(isScrolled, lastVisible) {
@@ -66,7 +81,7 @@ export async function deleteTweet(tweetId) {
         const tweetData = querySnapshot.docs[0].data();
 
         // images storage
-        if (tweetData.images.length > 0) {
+        if (tweetData.images && tweetData.images.length > 0) {
             tweetData.images.forEach(async (image) => {
                 // storage 삭제
                 const path = decodeURIComponent(image.split("/o/")[1].split("?")[0]);
@@ -83,11 +98,27 @@ export async function deleteTweet(tweetId) {
             collection(db, "alarm"),
             where("tweetId", "==", tweetId)
         );
-        // alarm
         const alarmSnapshot = await getDocs(alarmQuery);
         alarmSnapshot.forEach(async (item) => {
             await deleteDoc(doc(db, "alarm", item.id));
         });
+
+        // retweet
+        if (tweetData.reTweet) {
+            const retweetQuery = query(
+                collection(db, "tweets"),
+                where("__name__", "==", tweetData.reTweet.id)
+            );
+            const retweetSnapshot = await getDocs(retweetQuery);
+            const docRef = retweetSnapshot.docs[0].ref;
+            const retweetData = retweetSnapshot.docs[0].data();
+            const countObj = retweetData.count;
+            const udpateCount = { ...countObj, reTweet: countObj.reTweet - 1 };
+            await updateDoc(docRef, {
+                count: udpateCount
+            });
+        }
+
     } catch (error) {
         console.log(error);
     }
@@ -183,4 +214,32 @@ export async function getTweetOnlyOne(tweetId) {
     );
     const querySnapshot = await getDocs(replyQuery);
     return querySnapshot.docs[0].data();
+}
+
+export async function deleteTweetImageData(tweetId, url) {
+    const imagesQuery = query(
+        collection(db, `tweets`),
+        where("__name__", "==", tweetId)
+    );
+    const querySnapshot = await getDocs(imagesQuery);
+    const docRef = querySnapshot.docs[0].ref;
+    const tweetData = querySnapshot.docs[0].data();
+    console.log(tweetData)
+    const images = tweetData.images;
+    console.log(images)
+    console.log(url)
+    const newImages = images.filter((item) => item !== url);
+
+    console.log(newImages);
+    // await updateDoc(docRef, {
+    //     images: newImages
+    // });
+}
+
+export async function updateTweet(id, input) {
+    const docRef = doc(db, "tweets", id);
+    await updateDoc(docRef, {
+        tweet: input,
+        updatedAt: Date.now(),
+    });
 }

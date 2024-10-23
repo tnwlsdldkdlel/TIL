@@ -1,9 +1,8 @@
 import { Dialog, DialogTitle } from "@mui/material";
 import { memo, useCallback, useState } from "react";
 import RetweetForm from "./tweet-retweet-form";
-import { auth, db } from "../../../firebase";
-import { addDoc, collection } from "firebase/firestore";
 import RetweetContent from "./retweet-content";
+import { addRetweet } from "../../../api/retweetApi";
 
 function ReTweetDialog({
   isOpenReTweet,
@@ -14,8 +13,7 @@ function ReTweetDialog({
   createdAt,
   images,
 }) {
-  const [retweet, setRetweet] = useState();
-  const user = auth.currentUser;
+  const [retweet, setRetweet] = useState("");
 
   const onChange = useCallback((e) => {
     setRetweet(e.target.value);
@@ -23,33 +21,10 @@ function ReTweetDialog({
 
   const onSubmit = async (e) => {
     e.preventDefault();
-
-    if (!user || retweet === "" || retweet.length > retweet.maxLength) return;
+    if (retweet === "" || retweet.length > retweet.maxLength) return;
 
     try {
-      await addDoc(collection(db, "tweets"), {
-        tweet: retweet,
-        createdAt: Date.now(),
-        updatedAt: Date.now(),
-        userId: user.uid,
-        retweetId: id,
-      });
-
-      // 알람
-      if (userData.id !== user.uid) {
-        const content = `${user.displayName}님이 ${
-          tweet.length > 10 ? tweet.substr(0, 10) + "..." : tweet
-        }글을 리포스팅했습니다.`;
-        await addDoc(collection(db, "alarm"), {
-          userId: userData.id, // 리포스팅 당한 사람 uid
-          targetId: user.uid, // 리포스팅한 사람 uid
-          content: content,
-          tweetId: id,
-          isChecked: false,
-          createdAt: Date.now(),
-        });
-      }
-
+      await addRetweet(id, retweet, userData);
       handleClose();
     } catch (error) {
       console.log(error);

@@ -1,6 +1,7 @@
-import { ref, uploadBytes, getDownloadURL } from "firebase/storage";
+import { ref, uploadBytes, getDownloadURL, deleteObject } from "firebase/storage";
 import { v4 as uuidv4 } from "uuid";
 import { storage } from "../firebase";
+import { deleteTweetImageData } from "../api/tweetApi";
 
 export async function uploadTweetImage(images, docId) {
     try {
@@ -18,4 +19,21 @@ export async function uploadTweetImage(images, docId) {
         console.error("Error uploading images:", error);
         throw error;
     }
+}
+
+export async function deleteTweetImage(removeImgages, id) {
+    console.log(removeImgages)
+    if (removeImgages) {
+        removeImgages.forEach(async (image) => {
+            // storage 삭제
+            const path = decodeURIComponent(image.split("/o/")[1].split("?")[0]);
+            const photoRef = ref(storage, path);
+            await deleteObject(photoRef);
+
+            // db 삭제
+            console.log(image);
+            deleteTweetImageData(id, image);
+        });
+    }
+
 }

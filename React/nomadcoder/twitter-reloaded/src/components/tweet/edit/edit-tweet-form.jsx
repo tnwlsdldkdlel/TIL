@@ -1,27 +1,15 @@
 import { memo, useState } from "react";
 import "../edit/post-tweet-form.css";
-import { auth, db, storage } from "../../../firebase";
-import {
-  addDoc,
-  collection,
-  deleteDoc,
-  doc,
-  getDocs,
-  query,
-  updateDoc,
-  where,
-} from "firebase/firestore";
-import {
-  deleteObject,
-  getDownloadURL,
-  ref,
-  uploadBytes,
-} from "firebase/storage";
+import { auth } from "../../../firebase";
 import ImageSlider from "../../common/image-slider";
 import PostTweetForm from "./post-tweet-form";
 import SnackBar from "../../common/snack-bar";
 import BackDrop from "../../common/loading";
-import { v4 as uuidv4 } from "uuid";
+import {
+  deleteTweetImage,
+  uploadTweetImage,
+} from "../../../storage/tweetStorage";
+import { addTweetImageForId, updateTweet } from "../../../api/tweetApi";
 
 function EditTweetForm({ handleClose, tweet, prevImages, id }) {
   const [isLoading, setLoading] = useState(false);
@@ -67,51 +55,16 @@ function EditTweetForm({ handleClose, tweet, prevImages, id }) {
       setLoading(true);
 
       // 이미지 삭제
-      if (removeImgages) {
-        removeImgages.forEach(async (image) => {
-          // storage 삭제
-          const path = decodeURIComponent(image.split("/o/")[1].split("?")[0]);
-          const photoRef = ref(storage, path);
-          await deleteObject(photoRef);
-
-          // db 삭제
-          const imagesQuery = query(
-            collection(db, `images`),
-            where("tweetId", "==", id),
-            where("url", "==", image)
-          );
-
-          const querySnapshot = await getDocs(imagesQuery);
-          querySnapshot.forEach(async (snapshot) => {
-            await deleteDoc(doc(db, "images", snapshot.id));
-          });
-        });
-      }
+      await deleteTweetImage(removeImgages, id);
 
       // 이미지 추가
       if (addImages) {
-        addImages.forEach(async (image) => {
-          // storage 추가
-          const uuid = uuidv4();
-          const locationRef = ref(storage, `tweets/${id}/${uuid}`);
-          const result = await uploadBytes(locationRef, image);
-          const url = await getDownloadURL(result.ref);
-
-          // db 추가
-          await addDoc(collection(db, "images"), {
-            tweetId: id,
-            url: url,
-            createdAt: Date.now(),
-          });
-        });
+        const images = await uploadTweetImage(addImages, id);
+        await addTweetImageForId(id, images);
       }
 
       // 내용 수정
-      const docRef = doc(db, "tweets", id);
-      await updateDoc(docRef, {
-        tweet: input,
-        updatedAt: Date.now(),
-      });
+      await updateTweet(id, input);
 
       handleClose();
     } catch (error) {

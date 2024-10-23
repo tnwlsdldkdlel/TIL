@@ -3,7 +3,7 @@ import { memo } from "react";
 function RetweetForm({ retweet, onChange }) {
   return (
     <>
-      <form className="post-tweet-form" style={{ marginBottom: "5px" }}>
+      <div className="post-tweet-form" style={{ marginBottom: "5px" }}>
         <textarea
           rows={5}
           maxLength={180}
@@ -13,7 +13,7 @@ function RetweetForm({ retweet, onChange }) {
           value={retweet}
           onChange={onChange}
         ></textarea>
-      </form>
+      </div>
     </>
   );
 }

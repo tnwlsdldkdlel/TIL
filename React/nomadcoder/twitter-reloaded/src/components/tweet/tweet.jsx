@@ -11,7 +11,14 @@ import { useNavigate } from "react-router-dom";
 import ImageSlider from "../common/image-slider";
 import { likeTweet } from "../../api/tweetApi";
 
-function Tweet({ isReply, isLast, isRetweet, clickDelete, ...data }) {
+function Tweet({
+  isReply,
+  isLast,
+  isRetweet,
+  fetchInitialTweets,
+  clickDelete,
+  ...data
+}) {
   const [isOpen, setIsOpen] = useState(false);
   const [isOpenReply, setIsOpenReply] = useState(false);
   const [isOpenReTweet, setIsOpenReTweet] = useState(false);
@@ -19,7 +26,7 @@ function Tweet({ isReply, isLast, isRetweet, clickDelete, ...data }) {
   const navigate = useNavigate();
   const isMenuOpen = Boolean(anchorEl);
   const user = auth.currentUser;
-  const [tweet, setTweet] = useState(data);
+  const [like, setLike] = useState(data.like);
 
   const onClickDelete = async (tweetId) => {
     if (!confirm("정말로 삭제하실건가요?")) {
@@ -36,6 +43,7 @@ function Tweet({ isReply, isLast, isRetweet, clickDelete, ...data }) {
     setAnchorEl(null);
     setIsOpenReply(false);
     setIsOpenReTweet(false);
+    fetchInitialTweets();
   }, []);
 
   const onClickMenu = useCallback((e) => {
@@ -56,8 +64,8 @@ function Tweet({ isReply, isLast, isRetweet, clickDelete, ...data }) {
 
   const onClickLike = async (e) => {
     e.stopPropagation();
-    const updateLike = await likeTweet(tweet, user);
-    setTweet({ ...tweet, like: updateLike });
+    const updateLike = await likeTweet(data, user);
+    setLike(updateLike);
   };
 
   const onClickRelpyDialog = useCallback((e) => {
@@ -72,7 +80,7 @@ function Tweet({ isReply, isLast, isRetweet, clickDelete, ...data }) {
 
   const onClickUser = useCallback((e) => {
     e.stopPropagation();
-    navigate(`/profile`, { state: { userId: tweet.user.id } });
+    navigate(`/profile`, { state: { userId: data.user.id } });
   }, []);
 
   return (
@@ -88,8 +96,8 @@ function Tweet({ isReply, isLast, isRetweet, clickDelete, ...data }) {
         <div className="top">
           <div className="left" onClick={onClickUser}>
             <div className="photo">
-              {tweet.user != undefined && tweet.user.photo ? (
-                <img src={tweet.user.photo} />
+              {data != undefined && data.user.photo ? (
+                <img src={data.user.photo} />
               ) : (
                 <>
                   <svg
@@ -109,15 +117,14 @@ function Tweet({ isReply, isLast, isRetweet, clickDelete, ...data }) {
                 </>
               )}
             </div>
-            <div>{tweet.user != undefined ? tweet.user.name : ""}</div>
-            <div className="time">{timeAgo(tweet.createdAt)}</div>
+            <div>{data != undefined ? data.user.name : ""}</div>
+            <div className="time">{timeAgo(data.createdAt)}</div>
           </div>
           {isRetweet ? (
             <></>
           ) : (
             <div className="right">
-              {tweet.user != undefined &&
-              tweet.user.name === user.displayName ? (
+              {data != undefined && data.user.name === user.displayName ? (
                 <div className="menu" onClick={onClickMenu}>
                   <IconButton
                     className="btn"
@@ -167,7 +174,7 @@ function Tweet({ isReply, isLast, isRetweet, clickDelete, ...data }) {
                     </MenuItem>
                     <MenuItem
                       key={"remove"}
-                      onClick={() => onClickDelete(tweet.id)}
+                      onClick={() => onClickDelete(data.id)}
                       sx={{
                         borderBottom: "0px !important",
                       }}
@@ -184,10 +191,10 @@ function Tweet({ isReply, isLast, isRetweet, clickDelete, ...data }) {
           )}
         </div>
         <div className="middle" onClick={isReply ? null : onClickRelpyDialog}>
-          <p className="payload">{tweet.tweet}</p>
-          {tweet.images && tweet.images.length > 0 ? (
+          <p className="payload">{data.tweet}</p>
+          {data.images && data.images.length > 0 ? (
             <div className="image">
-              <ImageSlider images={tweet.images}></ImageSlider>
+              <ImageSlider images={data.images}></ImageSlider>
             </div>
           ) : null}
         </div>
@@ -195,7 +202,7 @@ function Tweet({ isReply, isLast, isRetweet, clickDelete, ...data }) {
           <></>
         ) : (
           <div className="bottom">
-            {tweet.like && tweet.like.indexOf(user.uid) > -1 ? (
+            {like && like.indexOf(user.uid) > -1 ? (
               <div
                 className="like-btn"
                 onClick={isRetweet ? undefined : onClickLike}
@@ -232,7 +239,7 @@ function Tweet({ isReply, isLast, isRetweet, clickDelete, ...data }) {
                 </svg>
               </div>
             )}
-            {tweet.like && tweet.like.length}
+            {like && like.length}
             <div
               className="reply-btn"
               style={{ cursor: isRetweet ? "auto" : "pointer" }}
@@ -252,7 +259,7 @@ function Tweet({ isReply, isLast, isRetweet, clickDelete, ...data }) {
                 />
               </svg>
             </div>
-            {tweet.reply && tweet.reply.count}
+            {data.count.reply}
             <div
               className="re-tweet-btn"
               onClick={isRetweet ? undefined : onClickReTweetDialog}
@@ -273,30 +280,30 @@ function Tweet({ isReply, isLast, isRetweet, clickDelete, ...data }) {
                 />
               </svg>
             </div>
-            {tweet.retweet && tweet.retweet.count}
+            {data.count.reTweet}
           </div>
         )}
       </div>
       <EditTweetDialog
         isOpen={isOpen}
         handleClose={handleClose}
-        images={tweet.images}
-        id={tweet.id}
-        tweet={tweet.tweet}
+        images={data.images}
+        id={data.id}
+        tweet={data.tweet}
       />
       <TweetReplyDialog
         isOpenReply={isOpenReply}
         handleClose={handleClose}
-        {...tweet}
+        {...data}
       />
       <ReTweetDialog
         isOpenReTweet={isOpenReTweet}
         handleClose={handleClose}
-        userData={tweet.user}
-        tweet={tweet.tweet}
-        id={tweet.id}
-        createdAt={tweet.createdAt}
-        images={tweet.images}
+        userData={data.user}
+        tweet={data.tweet}
+        id={data.id}
+        createdAt={data.createdAt}
+        images={data.images}
       />
     </>
   );
