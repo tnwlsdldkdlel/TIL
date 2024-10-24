@@ -38,12 +38,13 @@ function Tweet({
     }
   };
 
-  const handleClose = useCallback(() => {
+  const handleClose = useCallback(async () => {
     setIsOpen(false);
     setAnchorEl(null);
     setIsOpenReply(false);
     setIsOpenReTweet(false);
-    fetchInitialTweets();
+
+    await fetchInitialTweets();
   }, []);
 
   const onClickMenu = useCallback((e) => {

@@ -1,4 +1,4 @@
-import { addDoc, collection, deleteDoc, doc, getDocs, orderBy, query, where } from "firebase/firestore";
+import { addDoc, collection, deleteDoc, doc, getDocs, onSnapshot, orderBy, query, updateDoc, where } from "firebase/firestore";
 import { auth, db } from "../firebase";
 import { differenceInCalendarDays } from "date-fns";
 
@@ -19,7 +19,7 @@ export async function getAlarmList() {
     const previous = [];
 
     const snapshot = await getDocs(alarmQuery);
-    snapshot.docs.forEach((doc) => {
+    const result = snapshot.docs.map((doc) => {
         const alarmData = doc.data();
         const alarmId = doc.id;
 
@@ -38,6 +38,8 @@ export async function getAlarmList() {
             previous.push({ ...alarmData, id: alarmId });
         }
     });
+
+    await Promise.all(result);
 
     const alarmData = {
         today: todays,
@@ -61,7 +63,7 @@ export async function likeTweetAlarm(loginedUser, data) {
             createdAt: Date.now(),
             tweet: {
                 id: data.id,
-                images: data.images.length > 0 ? data.images[0] : ""
+                images: data.images ? "" : data.images.length > 0 ? data.images[0] : ""
             },
             user: {
                 photo: loginedUser.photoURL
@@ -133,4 +135,43 @@ export async function likeReplyAlarm(loginedUser, reply, tweet) {
     } catch (error) {
         console.log(error)
     }
+}
+
+export function isCheckedAlarm(callback) {
+    const user = auth.currentUser;
+
+    const repliesQuery = query(
+        collection(db, "alarm"),
+        where("isChecked", "==", false),
+        where("userId", "==", user.uid),
+        orderBy("__name__", "desc")
+    );
+
+    onSnapshot(repliesQuery, (replySnapshot) => {
+        const alarmCount = replySnapshot.docs.length;
+        callback(alarmCount);
+    });
+}
+
+export async function setChecked() {
+    const alarmsCollection = collection(db, "alarm");
+    const snapshot = await getDocs(alarmsCollection);
+
+    snapshot.docs.forEach((item) => {
+        const docRef = item.ref;
+        updateDoc(docRef, { isChecked: true });
+    });
+
+    return true;
+}
+
+export async function deleteFollowAlarm(followId) {
+    const alarmQuery = query(
+        collection(db, "alarm"),
+        where("followId", "==", followId)
+    );
+    const alarmSnapshot = await getDocs(alarmQuery);
+    alarmSnapshot.forEach(async (item) => {
+        await deleteDoc(doc(db, "alarm", item.id));
+    });
 }

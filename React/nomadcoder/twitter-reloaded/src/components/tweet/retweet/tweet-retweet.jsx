@@ -1,23 +1,15 @@
 import { memo, useState } from "react";
 import { timeAgo } from "../../../common/time-ago";
-import { auth, db } from "../../../firebase";
 import { IconButton, Menu, MenuItem } from "@mui/material";
 import MoreVertIcon from "@mui/icons-material/MoreVert";
-import {
-  addDoc,
-  collection,
-  deleteDoc,
-  doc,
-  getDocs,
-  query,
-  where,
-} from "firebase/firestore";
+import { deleteReply, replyLike } from "../../../api/replyApi";
+import { auth } from "../../../firebase";
 
 function TweetReply({ isLast, ...reply }) {
-  const user = auth.currentUser;
   const [anchorEl, setAnchorEl] = useState(null);
   const isMenuOpen = Boolean(anchorEl);
   const [isOpen, setIsOpen] = useState("");
+  const user = auth.currentUser;
 
   const onClickMenu = (e) => {
     e.stopPropagation();
@@ -34,19 +26,7 @@ function TweetReply({ isLast, ...reply }) {
 
   const onDelete = async () => {
     try {
-      const likeQuery = query(
-        collection(db, `likes`),
-        where("replyId", "==", reply.id)
-      );
-
-      // reply
-      await deleteDoc(doc(db, "replies", reply.id));
-
-      // like
-      const likeSnapshot = await getDocs(likeQuery);
-      likeSnapshot.forEach(async (item) => {
-        await deleteDoc(doc(db, "likes", item.id));
-      });
+      await deleteReply(reply.id);
     } catch (error) {
       console.log(error);
     }
@@ -54,42 +34,7 @@ function TweetReply({ isLast, ...reply }) {
 
   const onClickLike = async (e) => {
     e.stopPropagation();
-
-    if (reply.like.isLiked) {
-      await deleteDoc(doc(db, `likes`, reply.like.id));
-
-      const alarmQuery = query(
-        collection(db, "alarm"),
-        where("replyId", "==", reply.id)
-      );
-      const alarmSnapshot = await getDocs(alarmQuery);
-      alarmSnapshot.forEach(async (item) => {
-        await deleteDoc(doc(db, "alarm", item.id));
-      });
-    } else {
-      await addDoc(collection(db, `likes`), {
-        userId: user.uid,
-        replyId: reply.id,
-        createdAt: Date.now(),
-      });
-
-      // 알람
-      if (user.uid !== reply.userId) {
-        const content = `${user.displayName}님이 ${
-          reply.reply.length > 10
-            ? reply.reply.substr(0, 10) + "..."
-            : reply.reply
-        }댓글을 좋아합니다.`;
-        await addDoc(collection(db, "alarm"), {
-          userId: reply.userId, // 조아요 당한 사람 uid
-          targetId: user.uid, // 댓글을 조아요한 사람 uid
-          content: content,
-          replyId: reply.id,
-          isChecked: false,
-          createdAt: Date.now(),
-        });
-      }
-    }
+    await replyLike(reply.id);
   };
 
   return (

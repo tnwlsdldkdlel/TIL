@@ -22,18 +22,15 @@ export async function uploadTweetImage(images, docId) {
 }
 
 export async function deleteTweetImage(removeImgages, id) {
-    console.log(removeImgages)
-    if (removeImgages) {
-        removeImgages.forEach(async (image) => {
-            // storage 삭제
-            const path = decodeURIComponent(image.split("/o/")[1].split("?")[0]);
-            const photoRef = ref(storage, path);
-            await deleteObject(photoRef);
+    const result = removeImgages.map(async (image) => {
+        // storage 삭제
+        const path = decodeURIComponent(image.split("/o/")[1].split("?")[0]);
+        const photoRef = ref(storage, path);
+        await deleteObject(photoRef);
 
-            // db 삭제
-            console.log(image);
-            deleteTweetImageData(id, image);
-        });
-    }
+        // db 삭제
+        await deleteTweetImageData(id, image);
+    });
 
+    await Promise.all(result);
 }

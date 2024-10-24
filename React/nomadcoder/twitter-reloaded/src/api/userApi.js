@@ -1,4 +1,4 @@
-import { collection, getDocs, query, updateDoc, where } from "firebase/firestore";
+import { addDoc, collection, getDocs, query, updateDoc, where } from "firebase/firestore";
 import { auth, db } from "../firebase";
 import { EmailAuthProvider, reauthenticateWithCredential, updatePassword, updateProfile } from "firebase/auth";
 import { FirebaseError } from "firebase/app";
@@ -132,4 +132,22 @@ export async function setProfileUrl(url) {
         photo: url,
         updatedAt: Date.now(),
     });
+}
+
+export async function login(result) {
+    const userQuery = query(
+        collection(db, "user"),
+        where("id", "==", result.user.uid)
+    );
+    const userSnapshot = await getDocs(userQuery);
+
+    if (userSnapshot.empty) {
+        await addDoc(collection(db, "user"), {
+            createdAt: Date.now(),
+            updatedAt: Date.now(),
+            id: result.user.uid,
+            name: result.user.displayName,
+            photo: result.user.photoURL,
+        });
+    }
 }

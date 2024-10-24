@@ -1,62 +1,20 @@
-import {
-  addDoc,
-  collection,
-  deleteDoc,
-  doc,
-  getDocs,
-  query,
-  updateDoc,
-  where,
-} from "firebase/firestore";
 import { timeAgo } from "../../../common/time-ago";
 import "./alarm.css";
-import { auth, db } from "../../../firebase";
-import { memo } from "react";
+import { memo, useEffect, useState } from "react";
+import { checkIsFollowing } from "../../../api/followerApi";
 
-function FollowAlarm({ ...data }) {
-  const user = auth.currentUser;
+function FollowAlarm({ onClickFollow, isUpdate, ...data }) {
+  const [isFollowing, setIsFollowing] = useState(false);
 
-  const onClickFollow = async () => {
-    // 팔로우한 경우 팔로우를 취소
-    if (data.follow.isFollowing) {
-      const alramQuery = query(
-        collection(db, "alarm"),
-        where("followId", "==", data.follow.followingId)
-      );
-      const alarmSnapshot = await getDocs(alramQuery);
-      alarmSnapshot.forEach(async (item) => {
-        await deleteDoc(doc(db, "alarm", item.id));
-      });
+  console.log(data);
 
-      await deleteDoc(doc(db, "follow", data.follow.followingId));
-      const docRef = doc(db, "follow", data.follow.id);
+  useEffect(() => {
+    check();
+  }, [isUpdate]);
 
-      await updateDoc(docRef, {
-        updatedAt: Date.now(),
-      });
-    } else {
-      const docRef = doc(db, "follow", data.follow.id);
-      await updateDoc(docRef, {
-        updatedAt: Date.now(),
-      });
-
-      const followDoc = await addDoc(collection(db, "follow"), {
-        userId: user.uid, // 팔로우 건 사람
-        targetId: data.targetId, // 팔로우 당한 사람
-        createdAt: Date.now(),
-        updatedAt: Date.now(),
-      });
-
-      const content = `${user.displayName}님이 팔로우하기 시작했습니다.`;
-      await addDoc(collection(db, "alarm"), {
-        userId: data.targetId, // 팔로우 당한 사람 uid
-        targetId: user.uid, // 팔로우한 사람
-        followId: followDoc.id,
-        content: content,
-        isChecked: false,
-        createdAt: Date.now(),
-      });
-    }
+  const check = async () => {
+    const result = await checkIsFollowing(data.targetId, data.userId);
+    setIsFollowing(result);
   };
 
   return (
@@ -86,12 +44,22 @@ function FollowAlarm({ ...data }) {
         <div className="time">{timeAgo(data.createdAt)}</div>
       </div>
       <div className="right2">
-        {data.follow && data.follow.isFollowing ? (
-          <div className="follow-btn" onClick={onClickFollow}>
-            팔로우
+        {isFollowing ? (
+          <div
+            className="follow-btn"
+            onClick={() =>
+              onClickFollow(isFollowing, data.followId, data.targetId)
+            }
+          >
+            팔로잉
           </div>
         ) : (
-          <div className="mutual-follow-btn" onClick={onClickFollow}>
+          <div
+            className="mutual-follow-btn"
+            onClick={() =>
+              onClickFollow(isFollowing, data.followId, data.targetId)
+            }
+          >
             팔로우
           </div>
         )}

@@ -55,18 +55,19 @@ function EditTweetForm({ handleClose, tweet, prevImages, id }) {
       setLoading(true);
 
       // 이미지 삭제
-      await deleteTweetImage(removeImgages, id);
+      if (removeImgages.length > 0) {
+        await deleteTweetImage(removeImgages, id);
+      }
 
       // 이미지 추가
-      if (addImages) {
+      if (addImages.length > 0) {
         const images = await uploadTweetImage(addImages, id);
         await addTweetImageForId(id, images);
       }
 
       // 내용 수정
       await updateTweet(id, input);
-
-      handleClose();
+      await handleClose();
     } catch (error) {
       console.log(error);
     } finally {

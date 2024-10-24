@@ -1,5 +1,6 @@
 import { addDoc, collection, deleteDoc, doc, endAt, getDocs, orderBy, query, startAt, where } from "firebase/firestore";
 import { auth, db } from "../firebase";
+import { deleteFollowAlarm } from "./alarmApi";
 
 export async function getFollower(uid, search) {
     const followerQuery = query(
@@ -154,19 +155,39 @@ export async function deleteRemoveFollow(followId) {
         collection(db, "follow"),
         where("__name__", "==", followId)
     );
+
     const followSnapshot = await getDocs(followQuery);
-    const followData = followSnapshot.docs[0].data();
+    if (followSnapshot.docs.length > 0) {
+        const followData = followSnapshot.docs[0].data();
 
-    // 상대방의 팔로우 목록에서 나를 지운다. targetId : 상대방 userId : 나
-    const targetFollowQuery = query(
-        collection(db, "follow"),
-        where("userId", "==", followData.targetId),
-        where("targetId", "==", followData.userId),
-    );
-    const targetFollowSnapshot = await getDocs(targetFollowQuery);
-    await deleteDoc(doc(db, "follow", targetFollowSnapshot.docs[0].id));
+        // 상대방의 팔로우 목록에서 나를 지운다. targetId : 상대방 userId : 나
+        const targetFollowQuery = query(
+            collection(db, "follow"),
+            where("userId", "==", followData.targetId),
+            where("targetId", "==", followData.userId),
+        );
+        const targetFollowSnapshot = await getDocs(targetFollowQuery);
+        await deleteDoc(doc(db, "follow", targetFollowSnapshot.docs[0].id));
 
-    // 나도 상대방을 팔로우 목록에서 지운다.
-    await deleteDoc(doc(db, "follow", followId));
+        // 나도 상대방을 팔로우 목록에서 지운다.
+        await deleteDoc(doc(db, "follow", followId));
+
+        // 알람도 삭제.
+        await deleteFollowAlarm(followId);
+        await deleteFollowAlarm(targetFollowSnapshot.docs[0].id);
+    }
 }
 
+export async function checkIsFollowing(targetId, userId) {
+    // 맞팔로우 여부 확인
+    const followingQuery = query(
+        collection(db, "follow"),
+        where("userId", "==", userId),
+        where("targetId", "==", targetId)
+    );
+
+    const followingSnapshot = await getDocs(followingQuery);
+    const isFollowing = followingSnapshot.docs.length !== 0;
+
+    return isFollowing;
+}

@@ -1,8 +1,9 @@
 import { Dialog, DialogContent, DialogTitle } from "@mui/material";
-import { Fragment, memo, useEffect, useState } from "react";
+import { Fragment, memo, useCallback, useEffect, useState } from "react";
 import Alarm from "./alarm";
 import FollowAlarm from "./follow-alarm";
 import { getAlarmList } from "../../../api/alarmApi";
+import { deleteRemoveFollow, setfollow } from "../../../api/followerApi";
 
 function AlarmDialog({ isOpen, handleClose, onClickDetail }) {
   const [alarms, setAlarms] = useState({
@@ -12,15 +13,28 @@ function AlarmDialog({ isOpen, handleClose, onClickDetail }) {
     last30days: [],
     previous: [],
   });
+  const [isUpdate, setIsUpdate] = useState(false);
 
   useEffect(() => {
     getAlarm();
-  }, [isOpen]);
+  }, []);
 
   const getAlarm = async () => {
     const list = await getAlarmList();
     setAlarms(list);
   };
+
+  const onClickFollow = useCallback(async (isFollowing, followId, targetId) => {
+    // 팔로우한 경우 팔로우를 취소
+    setIsUpdate(false);
+    if (isFollowing) {
+      await deleteRemoveFollow(followId);
+    } else {
+      await setfollow(targetId);
+    }
+
+    setIsUpdate(true);
+  }, []);
 
   return (
     <Fragment>
@@ -74,7 +88,12 @@ function AlarmDialog({ isOpen, handleClose, onClickDetail }) {
                         {...alarm}
                       />
                     ) : (
-                      <FollowAlarm key={alarm.id} {...alarm} />
+                      <FollowAlarm
+                        key={alarm.id}
+                        onClickFollow={onClickFollow}
+                        isUpdate={isUpdate}
+                        {...alarm}
+                      />
                     )
                   )}
                 </div>
@@ -95,7 +114,12 @@ function AlarmDialog({ isOpen, handleClose, onClickDetail }) {
                         {...alarm}
                       />
                     ) : (
-                      <FollowAlarm key={alarm.id} {...alarm} />
+                      <FollowAlarm
+                        key={alarm.id}
+                        onClickFollow={onClickFollow}
+                        isUpdate={isUpdate}
+                        {...alarm}
+                      />
                     )
                   )}
                 </div>
@@ -116,7 +140,12 @@ function AlarmDialog({ isOpen, handleClose, onClickDetail }) {
                         {...alarm}
                       />
                     ) : (
-                      <FollowAlarm key={alarm.id} {...alarm} />
+                      <FollowAlarm
+                        key={alarm.id}
+                        onClickFollow={onClickFollow}
+                        isUpdate={isUpdate}
+                        {...alarm}
+                      />
                     )
                   )}
                 </div>
@@ -137,7 +166,12 @@ function AlarmDialog({ isOpen, handleClose, onClickDetail }) {
                         {...alarm}
                       />
                     ) : (
-                      <FollowAlarm key={alarm.id} {...alarm} />
+                      <FollowAlarm
+                        key={alarm.id}
+                        onClickFollow={onClickFollow}
+                        isUpdate={isUpdate}
+                        {...alarm}
+                      />
                     )
                   )}
                 </div>
@@ -158,7 +192,12 @@ function AlarmDialog({ isOpen, handleClose, onClickDetail }) {
                         {...alarm}
                       />
                     ) : (
-                      <FollowAlarm key={alarm.id} {...alarm} />
+                      <FollowAlarm
+                        key={alarm.id}
+                        onClickFollow={onClickFollow}
+                        isUpdate={isUpdate}
+                        {...alarm}
+                      />
                     )
                   )}
                 </div>

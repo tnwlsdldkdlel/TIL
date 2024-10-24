@@ -1,4 +1,4 @@
-import { addDoc, collection, getDocs, orderBy, query, updateDoc, where } from "firebase/firestore";
+import { addDoc, collection, deleteDoc, doc, getDocs, orderBy, query, updateDoc, where } from "firebase/firestore";
 import { auth, db } from "../firebase";
 import { deleteLikeReplyAlarm, likeReplyAlarm, tweetReplyAlarm } from "./alarmApi";
 import { getTweetOnlyOne } from "./tweetApi";
@@ -104,4 +104,8 @@ export async function getReplyList(tweetId) {
     }));
 
     return replyData;
+}
+
+export async function deleteReply(replyId) {
+    await deleteDoc(doc(db, "replies", replyId));
 }

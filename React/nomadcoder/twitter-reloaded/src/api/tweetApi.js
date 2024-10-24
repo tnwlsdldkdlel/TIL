@@ -32,8 +32,12 @@ export async function addTweetImageForId(id, uploadImages) {
     );
     const tweetSnapshot = await getDocs(tweetQuery);
     const docRef = tweetSnapshot.docs[0].ref;
+    const tweetData = tweetSnapshot.docs[0].data();
+    const updateImage = [...tweetData.images, ...uploadImages];
 
-    await updateDoc(docRef, { images: uploadImages });
+    await updateDoc(docRef, {
+        images: updateImage
+    });
 }
 
 export async function getTweetList(isScrolled, lastVisible) {
@@ -224,16 +228,12 @@ export async function deleteTweetImageData(tweetId, url) {
     const querySnapshot = await getDocs(imagesQuery);
     const docRef = querySnapshot.docs[0].ref;
     const tweetData = querySnapshot.docs[0].data();
-    console.log(tweetData)
     const images = tweetData.images;
-    console.log(images)
-    console.log(url)
     const newImages = images.filter((item) => item !== url);
 
-    console.log(newImages);
-    // await updateDoc(docRef, {
-    //     images: newImages
-    // });
+    await updateDoc(docRef, {
+        images: newImages
+    });
 }
 
 export async function updateTweet(id, input) {

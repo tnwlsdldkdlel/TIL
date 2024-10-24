@@ -1,22 +1,14 @@
 import { Outlet, useNavigate } from "react-router-dom";
 import "./layout.css";
-import { auth, db } from "../../firebase";
+import { auth } from "../../firebase";
 import { useCallback, useEffect, useState } from "react";
-import {
-  collection,
-  getDocs,
-  onSnapshot,
-  orderBy,
-  query,
-  updateDoc,
-  where,
-} from "firebase/firestore";
 import AlarmDialog from "../tweet/alarm/alarm-dialog";
 import TweetReplyDialog from "../tweet/reply/tweet-reply-dialog";
+import { isCheckedAlarm, setChecked } from "../../api/alarmApi";
+import { getTweetOnlyOne } from "../../api/tweetApi";
 
 export default function Layout() {
   const navigate = useNavigate();
-  const user = auth.currentUser;
   const [alarm, setAlarm] = useState(0);
   const [alramOpen, setAlarmOpen] = useState(false);
   const [detailOpen, setDetailOpen] = useState(false);
@@ -31,34 +23,18 @@ export default function Layout() {
   };
 
   useEffect(() => {
-    const repliesQuery = query(
-      collection(db, "alarm"),
-      where("isChecked", "==", false),
-      where("userId", "==", user.uid),
-      orderBy("__name__", "desc")
-    );
-
-    onSnapshot(repliesQuery, (replySnapshot) => {
-      const alarmCount = replySnapshot.docs.length;
-      // 알람 업데이트
-      setAlarm(alarmCount);
-    });
+    getAlarmCount();
   }, []);
 
-  const onClickAlarm = () => {
-    setChecked();
+  const getAlarmCount = () => {
+    isCheckedAlarm((count) => {
+      setAlarm(count);
+    });
   };
 
-  const setChecked = async () => {
-    const alarmsCollection = collection(db, "alarm");
-    const snapshot = await getDocs(alarmsCollection);
-
-    snapshot.docs.forEach((item) => {
-      const docRef = item.ref;
-      updateDoc(docRef, { isChecked: true });
-    });
-
-    setAlarmOpen(true);
+  const onClickAlarm = async () => {
+    const result = await setChecked();
+    setAlarmOpen(result);
   };
 
   const handleClose = useCallback(() => {
@@ -73,143 +49,9 @@ export default function Layout() {
     );
 
     handleClose();
-    await getTweet(tweetId);
+    const result = await getTweetOnlyOne(tweetId);
+    setTweet(result);
   }, []);
-
-  const getTweet = async (tweetId) => {
-    const tweetQuery = query(
-      collection(db, "tweets"),
-      where("__name__", "==", tweetId)
-    );
-
-    const snapshot = await getDocs(tweetQuery);
-    const tweetsData = snapshot.docs.map((doc) => {
-      const tweetData = doc.data();
-      const tweetId = doc.id;
-
-      return {
-        ...tweetData,
-        id: tweetId,
-        like: { isLiked: false, count: 0 },
-        reply: { count: 0 },
-        retweet: { count: 0 },
-        user: { id: tweetData.userId, name: "", photo: "" },
-        images: "", // 첫 사진만 가져오도록 한다.
-      };
-    });
-
-    setTweet(tweetsData[0]);
-
-    getTweetLike(tweetsData[0].id);
-    getTweetReply(tweetsData[0].id);
-    getImages(tweetsData[0].id);
-
-    if (tweetsData[0].retweetId) {
-      getRetweet(tweet.retweetId);
-    }
-
-    setDetailOpen(true);
-  };
-
-  const getImages = async (tweetId) => {
-    const imagesQuery = query(
-      collection(db, "images"),
-      where("tweetId", "==", tweetId),
-      orderBy("__name__", "asc")
-    );
-
-    const snapshot = await getDocs(imagesQuery);
-    if (snapshot.docs.length > 0) {
-      const imageArr = snapshot.docs.map((doc) => doc.data().url);
-
-      setTweet((prev) => {
-        return {
-          ...prev,
-          images: imageArr,
-        };
-      });
-    }
-  };
-
-  const getTweetLike = async (tweetId) => {
-    const tweetLikeQuery = query(
-      collection(db, "likes"),
-      where("tweetId", "==", tweetId)
-    );
-
-    const unsubscribeTweets = onSnapshot(tweetLikeQuery, (snapshot) => {
-      const likeCount = snapshot.docs.length;
-      let likeId = 0;
-      const isLiked = snapshot.docs.some((likeDoc) => {
-        if (likeDoc.data().userId === user.uid) {
-          likeId = likeDoc.id;
-          return true;
-        }
-      });
-
-      setTweet((prev) => {
-        return {
-          ...prev,
-          like: { isLiked: isLiked, count: likeCount, id: likeId },
-        };
-      });
-    });
-
-    return () => {
-      unsubscribeTweets();
-    };
-  };
-
-  const getTweetReply = async (tweetId) => {
-    const tweetReplyQuery = query(
-      collection(db, "replies"),
-      where("tweetId", "==", tweetId),
-      orderBy("__name__", "desc")
-    );
-
-    const unsubscribeTweets = onSnapshot(tweetReplyQuery, (snapshot) => {
-      const replyCount = snapshot.docs.length;
-
-      setTweet((prev) => {
-        return {
-          ...prev,
-          reply: { count: replyCount },
-        };
-      });
-    });
-
-    return () => {
-      unsubscribeTweets();
-    };
-  };
-
-  const getRetweet = async (retweetId) => {
-    const retweetQuery = query(
-      collection(db, "tweets"),
-      where("__name__", "==", retweetId)
-    );
-
-    const unsubscribeTweets = onSnapshot(retweetQuery, (retweetSnapshot) => {
-      const retweetCount = retweetSnapshot.docs.length;
-
-      // content 업데이트
-      setTweet((prevTweets) => {
-        return prevTweets.map((prevTweet) => {
-          if (prevTweet.id === retweetId) {
-            return {
-              ...prevTweet,
-              retweet: { count: retweetCount },
-            };
-          }
-          return prevTweet;
-        });
-      });
-    });
-
-    return () => {
-      unsubscribeTweets();
-    };
-  };
 
   const onClickMenu = (path) => {
     setMenu(path);

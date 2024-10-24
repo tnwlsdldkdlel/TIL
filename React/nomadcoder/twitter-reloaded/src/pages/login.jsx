@@ -26,6 +26,7 @@ export default function Login() {
       await signInWithEmailAndPassword(auth, input.email, input.password);
       navigate("/");
     } catch (error) {
+      console.log(error);
       if (error instanceof FirebaseError) {
         setError(error.message);
       }

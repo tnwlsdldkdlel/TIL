@@ -1,8 +1,8 @@
 import { GithubAuthProvider, signInWithPopup } from "firebase/auth";
 import "./github-btn.css";
 import { useNavigate } from "react-router-dom";
-import { auth, db } from "../../firebase";
-import { addDoc, collection, getDocs, query, where } from "firebase/firestore";
+import { auth } from "../../firebase";
+import { login } from "../../api/userApi";
 
 export default function GithubButton() {
   const navigate = useNavigate();
@@ -11,21 +11,7 @@ export default function GithubButton() {
       const provider = new GithubAuthProvider();
       const result = await signInWithPopup(auth, provider);
 
-      const userQuery = query(
-        collection(db, "user"),
-        where("id", "==", result.user.uid)
-      );
-      const userSnapshot = await getDocs(userQuery);
-
-      if (userSnapshot.empty) {
-        await addDoc(collection(db, "user"), {
-          createdAt: Date.now(),
-          updatedAt: Date.now(),
-          id: result.user.uid,
-          name: result.user.displayName,
-          photo: result.user.photoURL,
-        });
-      }
+      login(result);
 
       navigate("/", { replace: true });
     } catch (error) {
