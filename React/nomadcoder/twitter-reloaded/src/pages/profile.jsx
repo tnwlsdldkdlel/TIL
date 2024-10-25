@@ -234,7 +234,7 @@ function Profile() {
       ) : null}
       <div className="my-tweets scrollable" ref={scrollableDivRef}>
         {tweet.map((item, index) =>
-          item.retweetId != undefined ? (
+          item.reTweet != undefined ? (
             <ReTweet
               key={item.id}
               isLast={index === tweet.length - 1}
