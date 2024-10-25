@@ -6,8 +6,6 @@ import { checkIsFollowing } from "../../../api/followerApi";
 function FollowAlarm({ onClickFollow, isUpdate, ...data }) {
   const [isFollowing, setIsFollowing] = useState(false);
 
-  console.log(data);
-
   useEffect(() => {
     check();
   }, [isUpdate]);

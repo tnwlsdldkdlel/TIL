@@ -6,6 +6,8 @@ import AlarmDialog from "../tweet/alarm/alarm-dialog";
 import TweetReplyDialog from "../tweet/reply/tweet-reply-dialog";
 import { isCheckedAlarm, setChecked } from "../../api/alarmApi";
 import { getTweetOnlyOne } from "../../api/tweetApi";
+import { authSessionCheck } from "../../api/authApi";
+import SessionDialog from "./session-dialog";
 
 export default function Layout() {
   const navigate = useNavigate();
@@ -14,13 +16,7 @@ export default function Layout() {
   const [detailOpen, setDetailOpen] = useState(false);
   const [tweet, setTweet] = useState();
   const [menu, setMenu] = useState("/");
-
-  const onLogout = async () => {
-    if (confirm("로그아웃 하시겠어요?")) {
-      await auth.signOut();
-      navigate("/login", { replace: true });
-    }
-  };
+  const [sessionExpired, isSessionExpired] = useState(false);
 
   useEffect(() => {
     getAlarmCount();
@@ -30,6 +26,13 @@ export default function Layout() {
     isCheckedAlarm((count) => {
       setAlarm(count);
     });
+  };
+
+  const onLogout = async () => {
+    if (confirm("로그아웃 하시겠어요?")) {
+      await auth.signOut();
+      navigate("/login", { replace: true });
+    }
   };
 
   const onClickAlarm = async () => {
@@ -58,12 +61,18 @@ export default function Layout() {
     navigate(path);
   };
 
+  const handleSessionInvalid = async () => {
+    isSessionExpired(true);
+  };
+
   return (
     <div className="layout">
       <div className="menu">
         <div
           className={`menu-item ${menu === "/" ? "active" : ""}`}
-          onClick={() => onClickMenu("/")}
+          onClick={() =>
+            authSessionCheck(onClickMenu, handleSessionInvalid)("/")
+          }
         >
           <svg
             xmlns="http://www.w3.org/2000/svg"
@@ -83,7 +92,9 @@ export default function Layout() {
 
         <div
           className={`menu-item ${menu === "profile" ? "active" : ""}`}
-          onClick={() => onClickMenu("profile")}
+          onClick={() =>
+            authSessionCheck(onClickMenu, handleSessionInvalid)("profile")
+          }
         >
           <svg
             xmlns="http://www.w3.org/2000/svg"
@@ -103,7 +114,9 @@ export default function Layout() {
 
         <div
           className={`menu-item ${menu === "post" ? "active" : ""}`}
-          onClick={() => onClickMenu("post")}
+          onClick={() =>
+            authSessionCheck(onClickMenu, handleSessionInvalid)("post")
+          }
         >
           <svg
             xmlns="http://www.w3.org/2000/svg"
@@ -121,7 +134,10 @@ export default function Layout() {
           </svg>
         </div>
 
-        <div className="menu-item" onClick={onClickAlarm}>
+        <div
+          className="menu-item"
+          onClick={() => authSessionCheck(onClickAlarm, handleSessionInvalid)()}
+        >
           <svg
             xmlns="http://www.w3.org/2000/svg"
             fill="none"
@@ -183,6 +199,7 @@ export default function Layout() {
         handleClose={handleClose}
         {...tweet}
       />
+      <SessionDialog isOpen={sessionExpired}></SessionDialog>
     </div>
   );
 }

@@ -1,10 +1,15 @@
 import { useState } from "react";
 import "./create-account.css";
-import { signInWithEmailAndPassword } from "firebase/auth";
+import {
+  browserLocalPersistence,
+  setPersistence,
+  signInWithEmailAndPassword,
+} from "firebase/auth";
 import { Link, useNavigate } from "react-router-dom";
 import { FirebaseError } from "firebase/app";
 import GithubButton from "../components/auth/github-btn";
 import { auth } from "../firebase";
+import { userLogin } from "../api/authApi";
 
 export default function Login() {
   const navigate = useNavigate();
@@ -23,7 +28,10 @@ export default function Login() {
     setError("");
 
     try {
-      await signInWithEmailAndPassword(auth, input.email, input.password);
+      // 세션 local로 저장
+      await setPersistence(auth, browserLocalPersistence);
+      await userLogin(input.email, input.password);
+
       navigate("/");
     } catch (error) {
       console.log(error);

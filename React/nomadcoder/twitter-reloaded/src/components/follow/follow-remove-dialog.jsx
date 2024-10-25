@@ -26,7 +26,6 @@ function FollowRemoveDialog({
           maxWidth: "fit-content",
         },
       }}
-      s
     >
       <DialogTitle className="dialog-title">
         <div className="close-btn" onClick={handleClose}>
