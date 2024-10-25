@@ -1,4 +1,4 @@
-import { addDoc, collection, getDocs, query, updateDoc, where } from "firebase/firestore";
+import { addDoc, collection, endAt, getDocs, orderBy, query, startAt, updateDoc, where } from "firebase/firestore";
 import { auth, db } from "../firebase";
 import { EmailAuthProvider, reauthenticateWithCredential, updatePassword, updateProfile } from "firebase/auth";
 import { FirebaseError } from "firebase/app";
@@ -150,4 +150,19 @@ export async function login(result) {
             photo: result.user.photoURL,
         });
     }
+}
+
+export async function getUserList(search) {
+    const userQuery = query(
+        collection(db, "user"),
+        orderBy("name"),
+        startAt(search),
+        endAt(search + "\uf8ff")
+    );
+    const userSnapshot = await getDocs(userQuery);
+    const result = userSnapshot.docs.map((item) => {
+        return item.data();
+    })
+
+    return result;
 }

@@ -1,4 +1,4 @@
-import { Outlet, useNavigate } from "react-router-dom";
+import { Outlet, useLocation, useNavigate } from "react-router-dom";
 import "./layout.css";
 import { auth } from "../../firebase";
 import { useCallback, useEffect, useState } from "react";
@@ -15,8 +15,8 @@ export default function Layout() {
   const [alramOpen, setAlarmOpen] = useState(false);
   const [detailOpen, setDetailOpen] = useState(false);
   const [tweet, setTweet] = useState();
-  const [menu, setMenu] = useState("/");
   const [sessionExpired, isSessionExpired] = useState(false);
+  const location = useLocation();
 
   useEffect(() => {
     getAlarmCount();
@@ -57,7 +57,6 @@ export default function Layout() {
   }, []);
 
   const onClickMenu = (path) => {
-    setMenu(path);
     navigate(path);
   };
 
@@ -69,7 +68,7 @@ export default function Layout() {
     <div className="layout">
       <div className="menu">
         <div
-          className={`menu-item ${menu === "/" ? "active" : ""}`}
+          className={`menu-item ${location.pathname === "/" ? "active" : ""}`}
           onClick={() =>
             authSessionCheck(onClickMenu, handleSessionInvalid)("/")
           }
@@ -89,9 +88,33 @@ export default function Layout() {
             />
           </svg>
         </div>
-
         <div
-          className={`menu-item ${menu === "profile" ? "active" : ""}`}
+          className={`menu-item ${
+            location.pathname === "/search" ? "active" : ""
+          }`}
+          onClick={() =>
+            authSessionCheck(onClickMenu, handleSessionInvalid)("/search")
+          }
+        >
+          <svg
+            xmlns="http://www.w3.org/2000/svg"
+            fill="none"
+            viewBox="0 0 24 24"
+            strokeWidth={1.5}
+            stroke="currentColor"
+            className="size-6"
+          >
+            <path
+              strokeLinecap="round"
+              strokeLinejoin="round"
+              d="m21 21-5.197-5.197m0 0A7.5 7.5 0 1 0 5.196 5.196a7.5 7.5 0 0 0 10.607 10.607Z"
+            />
+          </svg>
+        </div>
+        <div
+          className={`menu-item ${
+            location.pathname.indexOf("/profile") > -1 ? "active" : ""
+          }`}
           onClick={() =>
             authSessionCheck(onClickMenu, handleSessionInvalid)("profile")
           }
@@ -113,7 +136,9 @@ export default function Layout() {
         </div>
 
         <div
-          className={`menu-item ${menu === "post" ? "active" : ""}`}
+          className={`menu-item ${
+            location.pathname === "/post" ? "active" : ""
+          }`}
           onClick={() =>
             authSessionCheck(onClickMenu, handleSessionInvalid)("post")
           }

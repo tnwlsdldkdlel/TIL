@@ -3,7 +3,7 @@ import "./timeline.css";
 import Tweet from "../tweet";
 import ReTweet from "../re-tweet";
 import BackDrop from "../../common/loading";
-import { deleteTweet, getTweetList } from "../../../api/tweetApi";
+import { deleteTweet, getTweetListForHome } from "../../../api/tweetApi";
 
 export default function Timeline() {
   const [tweets, setTweets] = useState([]);
@@ -46,10 +46,10 @@ export default function Timeline() {
     }
   };
 
-  const fetchInitialTweets = async (isScrolled = false) => {
+  const fetchInitialTweets = useCallback(async (isScrolled = false) => {
     setIsLoading(true);
     try {
-      const { tweetsData, hasMore, lastVisible } = await getTweetList(
+      const { data, hasMore, lastVisible } = await getTweetListForHome(
         isScrolled,
         paging.lastVisible,
         paging.hasMore
@@ -62,42 +62,49 @@ export default function Timeline() {
       }));
 
       if (isScrolled) {
-        setTweets((prev) => [...prev, ...tweetsData]);
+        setTweets((prev) => [...prev, ...data]);
       } else {
-        setTweets(tweetsData);
+        setTweets(data);
       }
     } catch (error) {
       console.error(error);
     } finally {
       setIsLoading(false);
     }
-  };
-
-  const clickDelete = useCallback(async (tweetId) => {
-    await deleteTweet(tweetId);
-    fetchInitialTweets();
   }, []);
+
+  const clickDelete = useCallback(
+    async (tweetId) => {
+      await deleteTweet(tweetId);
+      fetchInitialTweets();
+    },
+    [fetchInitialTweets]
+  );
 
   return (
     <div className="time-line scrollable" ref={scrollableDivRef}>
-      {tweets.map((item, index) =>
-        item.reTweet != undefined ? (
-          <ReTweet
-            key={item.id}
-            isLast={index === tweets.length - 1}
-            clickDelete={clickDelete}
-            fetchInitialTweets={fetchInitialTweets}
-            {...item}
-          />
-        ) : (
-          <Tweet
-            key={item.id}
-            isLast={index === tweets.length - 1}
-            clickDelete={clickDelete}
-            fetchInitialTweets={fetchInitialTweets}
-            {...item}
-          />
+      {tweets.length > 0 ? (
+        tweets.map((item, index) =>
+          item.reTweet != undefined ? (
+            <ReTweet
+              key={item.id}
+              isLast={index === tweets.length - 1}
+              clickDelete={clickDelete}
+              fetchInitialTweets={fetchInitialTweets}
+              {...item}
+            />
+          ) : (
+            <Tweet
+              key={item.id}
+              isLast={index === tweets.length - 1}
+              clickDelete={clickDelete}
+              fetchInitialTweets={fetchInitialTweets}
+              {...item}
+            />
+          )
         )
+      ) : (
+        <div className="empty">팔로잉을 하여 소식을 확인하세요! 🙋‍♀️</div>
       )}
       <BackDrop isLoading={isLoading}></BackDrop>
     </div>

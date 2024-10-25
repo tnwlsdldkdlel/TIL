@@ -12,6 +12,7 @@ import ProtectedRoute from "./components/common/protected-route";
 import ProfileEdit from "./components/profile/Edit";
 import Follower from "./components/follow/follower";
 import Post from "./pages/post";
+import Search from "./pages/search";
 
 const router = createBrowserRouter([
   {
@@ -27,6 +28,7 @@ const router = createBrowserRouter([
       { path: "profile/edit", element: <ProfileEdit /> },
       { path: "profile/follower", element: <Follower></Follower> },
       { path: "post", element: <Post></Post> },
+      { path: "search", element: <Search></Search> },
     ],
   },
   {

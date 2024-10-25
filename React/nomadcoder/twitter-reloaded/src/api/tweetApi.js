@@ -2,6 +2,7 @@ import { addDoc, collection, deleteDoc, doc, getDocs, limit, orderBy, query, sta
 import { auth, db, storage } from "../firebase";
 import { deleteObject, ref } from "firebase/storage";
 import { deleteLikeTweetAlarm, likeTweetAlarm } from "./alarmApi";
+import { getFollwing } from "./followerApi";
 
 export async function addTweet(data) {
     const user = auth.currentUser;
@@ -69,6 +70,58 @@ export async function getTweetList(isScrolled, lastVisible) {
         }));
 
         return { tweetsData, hasMore, lastVisible: lastVisibleDoc };
+    } catch (error) {
+        console.error("Error fetching tweets: ", error);
+        throw error;
+    }
+}
+
+export async function getTweetListForHome(isScrolled, lastVisible) {
+    try {
+        let tweetsQuery = null;
+        const loginedUser = auth.currentUser;
+        const loginedUserUid = loginedUser.uid;
+
+
+        // 팔로잉 user list
+        let data = [];
+        let hasMore = false;
+        let lastVisibleDoc = null;
+        const users = await getFollwing(loginedUserUid, "");
+        await Promise.all(users.map(async (item) => {
+            if (!isScrolled) {
+                tweetsQuery = query(
+                    collection(db, "tweets"),
+                    limit(20),
+                    where("user.id", "==", item.user.id),
+                    orderBy("createdAt", "desc")
+                );
+            } else {
+                tweetsQuery = query(
+                    collection(db, "tweets"),
+                    limit(20),
+                    orderBy("createdAt", "desc"),
+                    where("user.id", "==", item.user.id),
+                    startAfter(lastVisible)
+                );
+            }
+
+            const snapshot = await getDocs(tweetsQuery);
+            hasMore = snapshot.docs.length === 20;
+            lastVisibleDoc = snapshot.docs[snapshot.docs.length - 1];
+
+            snapshot.docs.forEach((doc) => {
+                const obj = {
+                    id: doc.id,
+                    ...doc.data()
+                }
+                data.push(obj);
+
+            })
+        }));
+
+        console.log(data)
+        return { data, hasMore, lastVisible: lastVisibleDoc };
     } catch (error) {
         console.error("Error fetching tweets: ", error);
         throw error;
