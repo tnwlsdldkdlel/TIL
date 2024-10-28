@@ -210,7 +210,7 @@ function Profile() {
         </div>
       </div>
       <div className="down">
-        <span className="name">{info.name}</span>
+        <span className="name">@{info.name}</span>
         {info && info.intro ? (
           <span className="intro">{info.intro}</span>
         ) : (

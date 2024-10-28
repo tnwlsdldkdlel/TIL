@@ -1,15 +1,12 @@
 import { useState } from "react";
 import "./create-account.css";
-import {
-  browserLocalPersistence,
-  setPersistence,
-  signInWithEmailAndPassword,
-} from "firebase/auth";
+import { browserLocalPersistence, setPersistence } from "firebase/auth";
 import { Link, useNavigate } from "react-router-dom";
 import { FirebaseError } from "firebase/app";
 import GithubButton from "../components/auth/github-btn";
 import { auth } from "../firebase";
 import { userLogin } from "../api/authApi";
+import GoogleBtn from "../components/auth/google-btn";
 
 export default function Login() {
   const navigate = useNavigate();
@@ -67,7 +64,10 @@ export default function Login() {
       <span className="link-text">
         <Link to="/create-account">계정이 없으신가요? 🚶‍♀️‍➡️</Link>
       </span>
-      <GithubButton></GithubButton>
+      <div className="login-btn">
+        <GithubButton></GithubButton>
+        <GoogleBtn></GoogleBtn>
+      </div>
     </div>
   );
 }

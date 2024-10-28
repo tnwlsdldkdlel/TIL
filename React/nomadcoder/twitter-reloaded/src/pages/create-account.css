@@ -50,3 +50,11 @@
     color: #5fb404;
   }
 }
+
+.create-account .login-btn {
+  width: -webkit-fill-available;
+  margin-top: 50px;
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+}
