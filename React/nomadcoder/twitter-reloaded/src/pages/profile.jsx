@@ -233,20 +233,24 @@ function Profile() {
         )
       ) : null}
       <div className="my-tweets scrollable" ref={scrollableDivRef}>
-        {tweet.map((item, index) =>
-          item.reTweet != undefined ? (
-            <ReTweet
-              key={item.id}
-              isLast={index === tweet.length - 1}
-              {...item}
-            />
-          ) : (
-            <Tweet
-              key={item.id}
-              isLast={index === tweet.length - 1}
-              {...item}
-            />
+        {tweet.length > 0 ? (
+          tweet.map((item, index) =>
+            item.reTweet != undefined ? (
+              <ReTweet
+                key={item.id}
+                isLast={index === tweet.length - 1}
+                {...item}
+              />
+            ) : (
+              <Tweet
+                key={item.id}
+                isLast={index === tweet.length - 1}
+                {...item}
+              />
+            )
           )
+        ) : (
+          <div className="empty">내 소식을 공유해주세요! 🙋‍♀️</div>
         )}
       </div>
       <BackDrop isLoading={isLoading}></BackDrop>
