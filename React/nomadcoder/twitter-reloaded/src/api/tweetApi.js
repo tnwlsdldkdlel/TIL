@@ -120,7 +120,6 @@ export async function getTweetListForHome(isScrolled, lastVisible) {
             })
         }));
 
-        console.log(data)
         return { data, hasMore, lastVisible: lastVisibleDoc };
     } catch (error) {
         console.error("Error fetching tweets: ", error);

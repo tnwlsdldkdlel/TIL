@@ -4,6 +4,7 @@ import Tweet from "../tweet";
 import ReTweet from "../re-tweet";
 import BackDrop from "../../common/loading";
 import { deleteTweet, getTweetListForHome } from "../../../api/tweetApi";
+import { throttle } from "lodash";
 
 export default function Timeline() {
   const [tweets, setTweets] = useState([]);
@@ -15,12 +16,46 @@ export default function Timeline() {
   });
   const [isLoading, setIsLoading] = useState(false);
 
-  useEffect(() => {
-    fetchInitialTweets();
+  const fetchInitialTweets = useCallback(
+    async (isScrolled = false, scrollTop = 0) => {
+      setIsLoading(true);
+      try {
+        const { data, hasMore, lastVisible } = await getTweetListForHome(
+          isScrolled,
+          paging.lastVisible,
+          paging.hasMore
+        );
 
+        setPaging({
+          lastScrollTop: scrollTop,
+          hasMore: hasMore,
+          lastVisible: lastVisible,
+        });
+
+        if (isScrolled) {
+          setTweets((prev) => [...prev, ...data]);
+        } else {
+          setTweets(data);
+        }
+      } catch (error) {
+        console.error(error);
+      } finally {
+        setIsLoading(false);
+      }
+    },
+    [paging]
+  );
+
+  useEffect(() => {
+    fetchInitialTweets(false);
+  }, []);
+
+  useEffect(() => {
     const scrollableDiv = scrollableDivRef.current;
+
     if (scrollableDiv) {
       scrollableDiv.addEventListener("scroll", handleScroll);
+      scrollableDiv.scrollTop = paging.lastScrollTop;
     }
 
     return () => {
@@ -28,50 +63,24 @@ export default function Timeline() {
         scrollableDiv.removeEventListener("scroll", handleScroll);
       }
     };
-  }, []);
+  }, [paging]);
 
-  const handleScroll = () => {
-    if (scrollableDivRef.current) {
-      const scrollTop = scrollableDivRef.current.scrollTop;
+  const handleScroll = useCallback(
+    throttle(async () => {
+      const scrollableDiv = scrollableDivRef.current;
+      const scrollTop = scrollableDiv.scrollTop;
 
-      if (scrollTop - paging.lastScrollTop >= 1900) {
-        setPaging({ ...paging, lastScrollTop: scrollTop });
-
-        const unsubscribe = fetchInitialTweets(true);
-
-        return () => {
-          unsubscribe();
-        };
+      if (scrollableDiv) {
+        if (
+          scrollTop > paging.lastScrollTop &&
+          scrollTop - paging.lastScrollTop >= 7000
+        ) {
+          await fetchInitialTweets(true, scrollTop);
+        }
       }
-    }
-  };
-
-  const fetchInitialTweets = useCallback(async (isScrolled = false) => {
-    setIsLoading(true);
-    try {
-      const { data, hasMore, lastVisible } = await getTweetListForHome(
-        isScrolled,
-        paging.lastVisible,
-        paging.hasMore
-      );
-
-      setPaging((prev) => ({
-        ...prev,
-        hasMore: hasMore,
-        lastVisible: lastVisible,
-      }));
-
-      if (isScrolled) {
-        setTweets((prev) => [...prev, ...data]);
-      } else {
-        setTweets(data);
-      }
-    } catch (error) {
-      console.error(error);
-    } finally {
-      setIsLoading(false);
-    }
-  }, []);
+    }, 200), // 200ms마다 한 번 호출
+    [paging]
+  );
 
   const clickDelete = useCallback(
     async (tweetId) => {

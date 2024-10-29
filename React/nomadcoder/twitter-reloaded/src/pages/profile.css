@@ -8,6 +8,7 @@
 
 .profile {
   width: 700px;
+  height: 90vh;
 }
 
 .edit .photo .avatar-upload,
@@ -80,7 +81,6 @@
   display: flex;
   flex-direction: column;
   gap: 10px;
-  height: 650px;
   width: -webkit-fill-available;
 }
 

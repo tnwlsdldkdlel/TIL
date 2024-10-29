@@ -1,6 +1,6 @@
 import "./profile.css";
 import { auth } from "../firebase";
-import { memo, useCallback, useLayoutEffect, useRef, useState } from "react";
+import { memo, useCallback, useEffect, useRef, useState } from "react";
 import Tweet from "../components/tweet/tweet";
 import ReTweet from "../components/tweet/re-tweet";
 import { useLocation, useNavigate } from "react-router-dom";
@@ -9,6 +9,7 @@ import { getMyTweetList } from "../api/tweetApi";
 import { getUserInfo } from "../api/userApi";
 import FollowRemoveDialog from "../components/follow/follow-remove-dialog";
 import { getFollwInfo, setfollow, setUnfollow } from "../api/followerApi";
+import { throttle } from "lodash";
 
 function Profile() {
   const user = auth.currentUser;
@@ -26,7 +27,7 @@ function Profile() {
     id: "",
   });
   const [tweet, setTweet] = useState([]);
-  const scrollableDivRef = useRef(null);
+  const scrollableDivRef = useRef();
   const [paging, setPaging] = useState({
     lastVisible: null,
     hasMore: true,
@@ -35,12 +36,11 @@ function Profile() {
   const [isLoading, setIsLoading] = useState(false);
   const [isOpen, setIsOpen] = useState(false);
 
-  useLayoutEffect(() => {
+  useEffect(() => {
     const fetchData = async () => {
       setIsLoading(true);
-
       try {
-        await Promise.all([fetchInitialTweets(false), getInfo(), getFollow()]);
+        fetchInitialTweets(false), getInfo(), getFollow();
       } catch (error) {
         console.error(error);
       } finally {
@@ -49,63 +49,75 @@ function Profile() {
     };
 
     fetchData();
+  }, [userId]);
 
+  useEffect(() => {
     const scrollableDiv = scrollableDivRef.current;
+
     if (scrollableDiv) {
       scrollableDiv.addEventListener("scroll", handleScroll);
-    }
+      scrollableDiv.scrollTop = paging.lastScrollTop;
 
-    return () => {
-      if (scrollableDiv) {
-        scrollableDiv.removeEventListener("scroll", handleScroll);
-      }
-    };
-  }, [userId]);
+      // 클린업 함수
+      return () => {
+        if (scrollableDiv) {
+          scrollableDiv.removeEventListener("scroll", handleScroll);
+        }
+      };
+    }
+  }, [paging]);
 
   const getInfo = useCallback(async () => {
     const result = await getUserInfo(userId);
     setInfo(result);
   }, [userId]);
 
-  const fetchInitialTweets = async (isScrolled) => {
-    try {
-      const { tweetsData, hasMore, lastVisible } = await getMyTweetList(
-        isScrolled,
-        paging.lastVisible,
-        userId
-      );
+  const fetchInitialTweets = useCallback(
+    async (isScrolled, scrollTop = 0) => {
+      setIsLoading(true);
+      try {
+        const { tweetsData, hasMore, lastVisible } = await getMyTweetList(
+          isScrolled,
+          paging.lastVisible,
+          userId
+        );
 
-      setPaging((prev) => ({
-        ...prev,
-        hasMore: hasMore,
-        lastVisible: lastVisible,
-      }));
+        setPaging({
+          lastScrollTop: scrollTop,
+          hasMore: hasMore,
+          lastVisible: lastVisible,
+        });
 
-      if (isScrolled) {
-        setTweet((prev) => [...prev, ...tweetsData]);
-      } else {
-        setTweet(tweetsData);
+        if (isScrolled) {
+          setTweet((prev) => [...prev, ...tweetsData]);
+        } else {
+          setTweet(tweetsData);
+        }
+      } catch (error) {
+        console.error(error);
+      } finally {
+        setIsLoading(false);
       }
-    } catch (error) {
-      console.error(error);
-    }
-  };
+    },
+    [paging, userId]
+  );
 
-  const handleScroll = () => {
-    if (scrollableDivRef.current) {
-      const scrollTop = scrollableDivRef.current.scrollTop;
+  const handleScroll = useCallback(
+    throttle(async () => {
+      const scrollableDiv = scrollableDivRef.current;
+      const scrollTop = scrollableDiv.scrollTop;
 
-      if (scrollTop - paging.lastScrollTop >= 1900) {
-        setPaging({ ...paging, lastScrollTop: scrollTop });
-
-        const unsubscribe = fetchInitialTweets(true);
-
-        return () => {
-          unsubscribe();
-        };
+      if (scrollableDiv) {
+        if (
+          scrollTop > paging.lastScrollTop &&
+          scrollTop - paging.lastScrollTop >= 7000
+        ) {
+          await fetchInitialTweets(true, scrollTop);
+        }
       }
-    }
-  };
+    }, 200), // 200ms마다 한 번 호출
+    [fetchInitialTweets, paging]
+  );
 
   const getFollow = async () => {
     if (userId) {
@@ -143,12 +155,8 @@ function Profile() {
     setFollow({ isFollow: false, id: "" });
     await getFollow();
     await getInfo();
-    await handleClose();
+    handleClose();
   }, []);
-
-  if (isLoading) {
-    return <div></div>;
-  }
 
   return (
     <div className="profile">

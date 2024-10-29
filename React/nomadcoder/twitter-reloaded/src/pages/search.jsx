@@ -6,6 +6,7 @@ import Tweet from "../components/tweet/tweet";
 import BackDrop from "../components/common/loading";
 import UserSearch from "../components/search/user-search";
 import { getUserList } from "../api/userApi";
+import { throttle } from "lodash";
 
 export default function Search() {
   const [search, setSearch] = useState("");
@@ -20,11 +21,11 @@ export default function Search() {
   const [users, setUsers] = useState([]);
 
   useEffect(() => {
-    fetchInitialTweets();
-
     const scrollableDiv = scrollableDivRef.current;
+
     if (scrollableDiv) {
       scrollableDiv.addEventListener("scroll", handleScroll);
+      scrollableDiv.scrollTop = paging.lastScrollTop;
     }
 
     return () => {
@@ -32,6 +33,10 @@ export default function Search() {
         scrollableDiv.removeEventListener("scroll", handleScroll);
       }
     };
+  }, [paging]);
+
+  useEffect(() => {
+    fetchInitialTweets(false);
   }, []);
 
   const onChangeSearch = async (e) => {
@@ -43,28 +48,29 @@ export default function Search() {
     setSearch("");
   };
 
-  const handleScroll = () => {
-    if (scrollableDivRef.current) {
-      const scrollTop = scrollableDivRef.current.scrollTop;
+  const handleScroll = useCallback(
+    throttle(async () => {
+      const scrollableDiv = scrollableDivRef.current;
+      const scrollTop = scrollableDiv.scrollTop;
 
-      if (scrollTop - paging.lastScrollTop >= 1900) {
-        setPaging({ ...paging, lastScrollTop: scrollTop });
-
-        const unsubscribe = fetchInitialTweets(true);
-
-        return () => {
-          unsubscribe();
-        };
+      if (scrollableDiv) {
+        if (
+          scrollTop > paging.lastScrollTop &&
+          scrollTop - paging.lastScrollTop >= 7000
+        ) {
+          await fetchInitialTweets(true, scrollTop);
+        }
       }
-    }
-  };
+    }, 200), // 200ms마다 한 번 호출
+    [paging]
+  );
 
   const searchUser = async (target) => {
     const list = await getUserList(target);
     setUsers(list);
   };
 
-  const fetchInitialTweets = async (isScrolled = false) => {
+  const fetchInitialTweets = async (isScrolled = false, scrollTop = 0) => {
     setIsLoading(true);
     try {
       const { tweetsData, hasMore, lastVisible } = await getTweetList(
@@ -73,11 +79,11 @@ export default function Search() {
         paging.hasMore
       );
 
-      setPaging((prev) => ({
-        ...prev,
+      setPaging({
+        lastScrollTop: scrollTop,
         hasMore: hasMore,
         lastVisible: lastVisible,
-      }));
+      });
 
       if (isScrolled) {
         setTweets((prev) => [...prev, ...tweetsData]);
