@@ -49,7 +49,7 @@ function Profile() {
     };
 
     fetchData();
-  }, [userId]);
+  }, []);
 
   useEffect(() => {
     const scrollableDiv = scrollableDivRef.current;
@@ -70,7 +70,7 @@ function Profile() {
   const getInfo = useCallback(async () => {
     const result = await getUserInfo(userId);
     setInfo(result);
-  }, [userId]);
+  }, []);
 
   const fetchInitialTweets = useCallback(
     async (isScrolled, scrollTop = 0) => {
@@ -99,7 +99,7 @@ function Profile() {
         setIsLoading(false);
       }
     },
-    [paging, userId]
+    [paging]
   );
 
   const handleScroll = useCallback(

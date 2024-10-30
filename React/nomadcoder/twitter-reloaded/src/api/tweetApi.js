@@ -88,8 +88,8 @@ export async function getTweetListForHome(isScrolled, lastVisible) {
         let lastVisibleDoc = null;
         const users = await getFollwing(loginedUserUid, "");
 
+        // 팔로잉 유저의 트윗 쿼리
         await Promise.all(users.map(async (item) => {
-            // 팔로우한 유저의 트윗 쿼리
             if (!isScrolled) {
                 tweetsQuery = query(
                     collection(db, "tweets"),
@@ -116,7 +116,7 @@ export async function getTweetListForHome(isScrolled, lastVisible) {
             lastVisibleDoc = snapshot.docs[snapshot.docs.length - 1];
         }));
 
-        // 로그인한 유저의 트윗 쿼리 추가
+        // 로그인한 유저의 트윗 쿼리
         let loginedUserQuery;
         if (!isScrolled) {
             loginedUserQuery = query(
@@ -144,13 +144,15 @@ export async function getTweetListForHome(isScrolled, lastVisible) {
         hasMore = hasMore || loginedUserSnapshot.docs.length === 20;
         lastVisibleDoc = loginedUserSnapshot.docs[loginedUserSnapshot.docs.length - 1];
 
+        // createdAt 기준으로 정렬
+        data.sort((a, b) => b.createdAt - a.createdAt);
+
         return { data, hasMore, lastVisible: lastVisibleDoc };
     } catch (error) {
         console.error("Error fetching tweets: ", error);
         throw error;
     }
 }
-
 
 export async function deleteTweet(tweetId) {
     try {
