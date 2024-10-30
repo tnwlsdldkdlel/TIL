@@ -1,6 +1,7 @@
 import { addDoc, collection, getDocs, query, updateDoc, where } from "firebase/firestore";
 import { auth, db } from "../firebase";
 import { getTweetOnlyOne } from "./tweetApi";
+import { repostTweetAlarm } from "./alarmApi";
 
 export async function addRetweet(id, retweet, userData) {
     const user = auth.currentUser;
@@ -36,16 +37,7 @@ export async function addRetweet(id, retweet, userData) {
 
     // 알람
     if (userData.id !== user.uid) {
-        const content = `${user.displayName}님이 ${retweet.length > 10 ? retweet.substr(0, 10) + "..." : retweet
-            }글을 리포스팅했습니다.`;
-        await addDoc(collection(db, "alarm"), {
-            userId: userData.id, // 리포스팅 당한 사람 uid
-            targetId: user.uid, // 리포스팅한 사람 uid
-            content: content,
-            tweetId: id,
-            isChecked: false,
-            createdAt: Date.now(),
-        });
+        repostTweetAlarm(user, reTweet, id);
 
         return doc;
     }

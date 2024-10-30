@@ -54,7 +54,7 @@ export async function getAlarmList() {
 
 export async function likeTweetAlarm(loginedUser, data) {
     try {
-        const content = `${loginedUser.displayName}님이 ${data.tweet > 10 ? data.tweet.substr(0, 10) + "..." : data.tweet} 글을 좋아합니다.`;
+        const content = `${loginedUser.displayName}님이 ${data.tweet.length > 10 ? data.tweet.substr(0, 10) + "..." : data.tweet} 글을 좋아합니다.`;
         await addDoc(collection(db, "alarm"), {
             userId: data.user.id, // 좋아요 당한 사람 uid
             targetId: loginedUser.uid, // 좋아요 한 사람 uid
@@ -63,7 +63,30 @@ export async function likeTweetAlarm(loginedUser, data) {
             createdAt: Date.now(),
             tweet: {
                 id: data.id,
-                images: data.images ? "" : data.images.length > 0 ? data.images[0] : ""
+                images: data.images.length > 0 ? data.images[0] : ""
+            },
+            user: {
+                photo: loginedUser.photoURL
+            }
+        });
+    } catch (error) {
+        console.log(error)
+    }
+}
+
+export async function repostTweetAlarm(loginedUser, data, tweetId) {
+    try {
+        const content = `${loginedUser.displayName}님이 ${data.tweet.length > 10 ? data.tweet.substr(0, 10) + "..." : data.tweet} 글을 리포스팅했습니다.`;
+
+        await addDoc(collection(db, "alarm"), {
+            userId: data.user.id, // 좋아요 당한 사람 uid
+            targetId: loginedUser.uid, // 좋아요 한 사람 uid
+            content: content,
+            isChecked: false,
+            createdAt: Date.now(),
+            tweet: {
+                id: tweetId,
+                images: data.images.length > 0 ? data.images[0] : ""
             },
             user: {
                 photo: loginedUser.photoURL
@@ -85,16 +108,20 @@ export async function deleteLikeTweetAlarm(tweetId) {
     });
 }
 
-export async function tweetReplyAlarm(userId, user, tweetId, tweet, replyId) {
+export async function tweetReplyAlarm(user, tweetId, data) {
     try {
-        const content = `${user.displayName}님이 ${tweet > 10 ? tweet.substr(0, 10) + "..." : tweet}글에 댓글을 달았습니다.`;
+        const content = `${user.displayName}님이 ${data.tweet.length > 10 ? data.tweet.substr(0, 10) + "..." : data.tweet}글에 댓글을 달았습니다.`;
 
         await addDoc(collection(db, "alarm"), {
-            userId: userId, // 댓글을 당한 사람 uid
+            userId: data.user.id, // 댓글을 당한 사람 uid
             targetId: user.uid, // 댓글을 한 사람 uid
             content: content,
-            reply: {
-                id: replyId,
+            tweet: {
+                id: tweetId,
+                images: data.images.length > 0 ? data.images[0] : ""
+            },
+            user: {
+                photo: user.photoURL
             },
             isChecked: false,
             createdAt: Date.now(),
