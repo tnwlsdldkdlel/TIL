@@ -1,4 +1,4 @@
-import { addDoc, collection, deleteDoc, doc, getDocs, limit, orderBy, query, startAfter, updateDoc, where } from "firebase/firestore";
+import { addDoc, collection, deleteDoc, doc, getDocs, limit, or, orderBy, query, startAfter, updateDoc, where } from "firebase/firestore";
 import { auth, db, storage } from "../firebase";
 import { deleteObject, ref } from "firebase/storage";
 import { deleteLikeTweetAlarm, likeTweetAlarm } from "./alarmApi";
@@ -82,43 +82,67 @@ export async function getTweetListForHome(isScrolled, lastVisible) {
         const loginedUser = auth.currentUser;
         const loginedUserUid = loginedUser.uid;
 
-
         // 팔로잉 user list
         let data = [];
         let hasMore = false;
         let lastVisibleDoc = null;
         const users = await getFollwing(loginedUserUid, "");
+
         await Promise.all(users.map(async (item) => {
+            // 팔로우한 유저의 트윗 쿼리
             if (!isScrolled) {
                 tweetsQuery = query(
                     collection(db, "tweets"),
-                    limit(20),
                     where("user.id", "==", item.user.id),
-                    orderBy("createdAt", "desc")
+                    orderBy("createdAt", "desc"),
+                    limit(20)
                 );
             } else {
                 tweetsQuery = query(
                     collection(db, "tweets"),
-                    limit(20),
-                    orderBy("createdAt", "desc"),
                     where("user.id", "==", item.user.id),
-                    startAfter(lastVisible)
+                    orderBy("createdAt", "desc"),
+                    startAfter(lastVisible),
+                    limit(20)
                 );
             }
 
             const snapshot = await getDocs(tweetsQuery);
+            snapshot.docs.forEach((doc) => {
+                const obj = { id: doc.id, ...doc.data() };
+                data.push(obj);
+            });
             hasMore = snapshot.docs.length === 20;
             lastVisibleDoc = snapshot.docs[snapshot.docs.length - 1];
-
-            snapshot.docs.forEach((doc) => {
-                const obj = {
-                    id: doc.id,
-                    ...doc.data()
-                }
-                data.push(obj);
-
-            })
         }));
+
+        // 로그인한 유저의 트윗 쿼리 추가
+        let loginedUserQuery;
+        if (!isScrolled) {
+            loginedUserQuery = query(
+                collection(db, "tweets"),
+                where("user.id", "==", loginedUserUid),
+                orderBy("createdAt", "desc"),
+                limit(20)
+            );
+        } else {
+            loginedUserQuery = query(
+                collection(db, "tweets"),
+                where("user.id", "==", loginedUserUid),
+                orderBy("createdAt", "desc"),
+                startAfter(lastVisible),
+                limit(20)
+            );
+        }
+
+        const loginedUserSnapshot = await getDocs(loginedUserQuery);
+        loginedUserSnapshot.docs.forEach((doc) => {
+            const obj = { id: doc.id, ...doc.data() };
+            data.push(obj);
+        });
+
+        hasMore = hasMore || loginedUserSnapshot.docs.length === 20;
+        lastVisibleDoc = loginedUserSnapshot.docs[loginedUserSnapshot.docs.length - 1];
 
         return { data, hasMore, lastVisible: lastVisibleDoc };
     } catch (error) {
@@ -126,6 +150,7 @@ export async function getTweetListForHome(isScrolled, lastVisible) {
         throw error;
     }
 }
+
 
 export async function deleteTweet(tweetId) {
     try {

@@ -7,6 +7,7 @@ import GithubButton from "../components/auth/github-btn";
 import { auth } from "../firebase";
 import { userLogin } from "../api/authApi";
 import GoogleBtn from "../components/auth/google-btn";
+import { FirebaseErrorMessage } from "../common/firebase-error";
 
 export default function Login() {
   const navigate = useNavigate();
@@ -33,7 +34,7 @@ export default function Login() {
     } catch (error) {
       console.log(error);
       if (error instanceof FirebaseError) {
-        setError(error.message);
+        setError(FirebaseErrorMessage(error));
       }
     }
   };
