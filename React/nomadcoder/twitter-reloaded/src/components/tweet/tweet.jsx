@@ -194,9 +194,15 @@ function Tweet({
         <div className="middle" onClick={isReply ? null : onClickRelpyDialog}>
           <p className="payload">{data.tweet}</p>
           {data.images && data.images.length > 0 ? (
-            <div className="image">
-              <ImageSlider images={data.images}></ImageSlider>
-            </div>
+            data.images.length > 1 ? (
+              <div className="image">
+                <ImageSlider images={data.images} />
+              </div>
+            ) : (
+              <div className="single-image">
+                <img src={data.images[0]} />
+              </div>
+            )
           ) : null}
         </div>
         {isRetweet ? (
