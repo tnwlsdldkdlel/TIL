@@ -45,9 +45,17 @@ function RetweetContent({ user, createdAt, tweet, images }) {
         <div className="middle">
           <p className="payload">{tweet}</p>
           {images && images.length > 0 ? (
-            <div className="image">
+            images.length > 1 ? (
               <ImageSlider images={images}></ImageSlider>
-            </div>
+            ) : (
+              <div className="single-image">
+                <img
+                  src={
+                    images[0].name ? URL.createObjectURL(images[0]) : images[0]
+                  }
+                />
+              </div>
+            )
           ) : null}
         </div>
       </div>
