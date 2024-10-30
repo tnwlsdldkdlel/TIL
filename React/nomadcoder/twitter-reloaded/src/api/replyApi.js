@@ -8,7 +8,7 @@ export async function addReply(input, tweetId, userId) {
     const loginedUserUid = loginedUser.uid;
 
     try {
-        const doc = await addDoc(collection(db, "replies"), {
+        await addDoc(collection(db, "replies"), {
             reply: input,
             createdAt: Date.now(),
             updatedAt: Date.now(),
@@ -38,8 +38,8 @@ export async function addReply(input, tweetId, userId) {
         });
 
         // 알람 추가 (본인 글 제외)
-        if (userId !== loginedUserUid) {
-            await tweetReplyAlarm(userId, loginedUser, tweetId, input, doc.id);
+        if (tweetData !== loginedUserUid) {
+            await tweetReplyAlarm(loginedUser, tweetId, tweetData);
         }
 
         return udpateCount;

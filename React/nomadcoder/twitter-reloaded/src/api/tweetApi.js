@@ -196,7 +196,7 @@ export async function deleteTweet(tweetId) {
             const docRef = retweetSnapshot.docs[0].ref;
             const retweetData = retweetSnapshot.docs[0].data();
             const countObj = retweetData.count;
-            const udpateCount = { ...countObj, reTweet: countObj.reTweet - 1 };
+            const udpateCount = { ...countObj, reTweet: countObj.reTweet === 0 ? 0 : countObj.reTweet - 1 };
             await updateDoc(docRef, {
                 count: udpateCount
             });
