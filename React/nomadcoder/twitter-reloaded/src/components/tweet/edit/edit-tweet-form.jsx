@@ -88,11 +88,19 @@ function EditTweetForm({ handleClose, tweet, prevImages, id }) {
   return (
     <div className="post">
       {images.length > 0 ? (
-        <ImageSlider
-          images={images}
-          clieckRemoveImage={clieckRemoveImage}
-          isEdit={true}
-        ></ImageSlider>
+        images.length > 1 ? (
+          <ImageSlider
+            images={images}
+            clieckRemoveImage={clieckRemoveImage}
+            isEdit={true}
+          ></ImageSlider>
+        ) : (
+          <div className="single-image">
+            <img
+              src={images[0].name ? URL.createObjectURL(images[0]) : images[0]}
+            />
+          </div>
+        )
       ) : null}
       <PostTweetForm
         tweet={input}

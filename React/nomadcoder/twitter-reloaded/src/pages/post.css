@@ -27,3 +27,18 @@
   border: 1px solid #2f2f2f;
   object-fit: contain;
 }
+
+.single-image img {
+  border-radius: 20px;
+  width: 400px !important;
+  height: 400px !important;
+  border: 1px solid #2f2f2f;
+  object-fit: contain;
+}
+
+.single-image {
+  margin-bottom: 20px;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+}
