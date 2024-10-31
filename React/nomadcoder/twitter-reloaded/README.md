@@ -40,7 +40,7 @@ Host : [https://twitter-reloaded-6a53f.web.app](https://twitter-reloaded-6a53f.w
   ![image](https://github.com/user-attachments/assets/f57e416d-0138-4cd1-977e-8e4c4c588f99)
 
 4. 게시글 작성
-   : 게시글은 10장 이하의 사진과 내용을 작성할 수 있습니다.
+   : 게시글은 5장 이하의 사진과 내용을 작성할 수 있습니다.
    ![image](https://github.com/user-attachments/assets/caf44118-7feb-41de-84b7-57fdac429036)
 
 5. 알림
