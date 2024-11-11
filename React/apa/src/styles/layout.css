@@ -1,0 +1,15 @@
+.header {
+  display: flex;
+  flex-direction: row;
+  justify-content: right;
+}
+
+.header .user {
+  align-content: center;
+}
+
+.main-logo {
+  display: flex;
+  flex-direction: row;
+  justify-content: center;
+}
