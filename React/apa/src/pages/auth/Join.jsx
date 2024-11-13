@@ -2,17 +2,16 @@ import { useNavigate } from "react-router-dom";
 import "../../styles/auth.css";
 import { useState } from "react";
 import JoinFailDialog from "../../components/dialog/JoinFailDialog";
-import { createUserWithEmailAndPassword, updateProfile } from "firebase/auth";
-import { auth } from "../../firebase";
 import { FirebaseError } from "firebase/app";
 import { FirebaseErrorMessage } from "../../utils/firebaseErrorMessage";
+import { join, login } from "../../api/user";
 
 const Join = () => {
   const navigate = useNavigate();
   const [input, setInput] = useState({
     email: "",
     nickname: "",
-    password1: "",
+    password: "",
     password2: "",
   });
   const [errorMesssage, setErrorMessage] = useState("");
@@ -48,8 +47,8 @@ const Join = () => {
 
     // 3. 비밀번호
     if (
-      input.password1 != input.password2 ||
-      input.password1.length < 7 ||
+      input.password != input.password2 ||
+      input.password.length < 7 ||
       input.password2.length < 7
     ) {
       setIsError(true);
@@ -64,13 +63,9 @@ const Join = () => {
   const clickJoin = async () => {
     try {
       if (validation()) {
-        const credentials = await createUserWithEmailAndPassword(
-          auth,
-          input.email,
-          input.password1
-        );
+        join(input);
+        login(input);
 
-        await updateProfile(credentials.user, { displayName: input.nickname });
         navigate("/");
       }
     } catch (error) {
@@ -100,8 +95,8 @@ const Join = () => {
         <input
           type="password"
           placeholder="비밀번호 (8글자이상)"
-          value={input.password1}
-          name="password1"
+          value={input.password}
+          name="password"
           onChange={onChangeInput}
         ></input>
         <input

@@ -37,3 +37,12 @@
 .login .join {
   margin-top: 10px;
 }
+
+.login-btn:disabled {
+  background-color: #e0e2e4;
+  cursor: not-allowed;
+}
+
+.login-btn.loading {
+  position: relative;
+}
