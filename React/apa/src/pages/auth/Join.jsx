@@ -5,6 +5,7 @@ import JoinFailDialog from "../../components/dialog/JoinFailDialog";
 import { FirebaseError } from "firebase/app";
 import { FirebaseErrorMessage } from "../../utils/firebaseErrorMessage";
 import { join, login } from "../../api/user";
+import MainLogo from "../../layouts/MainLogo";
 
 const Join = () => {
   const navigate = useNavigate();
@@ -78,6 +79,7 @@ const Join = () => {
 
   return (
     <div className="login">
+      <MainLogo />
       <h2>회원가입</h2>
       <div className="values">
         <input
